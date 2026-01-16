@@ -4,66 +4,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Astro Poker | Real-time</title>
+    <title>Live Planning Poker</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Основные библиотеки синхронизации -->
+    <!-- Gun.js Основная библиотека -->
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --accent: #00f2ff;
-        }
-
         body {
-            font-family: 'Inter', sans-serif;
-            background: #050505;
+            font-family: 'Outfit', sans-serif;
+            background: #0b0e14;
             color: #e2e8f0;
             min-height: 100vh;
-            background-image:
-                radial-gradient(circle at 20% 30%, #1e293b 0%, transparent 40%),
-                radial-gradient(circle at 80% 70%, #0f172a 0%, transparent 40%);
         }
 
-        .header-font {
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        .glass {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        .neon-border {
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+            border: 1px solid rgba(56, 189, 248, 0.3);
         }
 
         .card-poker {
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.2s ease-out;
             cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(30, 41, 59, 0.5);
+            user-select: none;
         }
 
         .card-poker:hover {
-            transform: translateY(-12px) scale(1.05);
-            border-color: var(--accent);
-            box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+            transform: translateY(-8px);
+            background: rgba(56, 189, 248, 0.1);
+            border-color: #38bdf8;
         }
 
         .card-active {
-            background: var(--accent) !important;
-            color: #000 !important;
-            transform: translateY(-15px);
-            box-shadow: 0 0 30px var(--accent);
+            background: #38bdf8 !important;
+            color: #0f172a !important;
+            transform: translateY(-12px);
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.5);
         }
 
+        /* Анимация переворота */
         .user-card {
             perspective: 1000px;
-            width: 90px;
-            height: 130px;
+            width: 80px;
+            height: 110px;
         }
 
         .user-card-inner {
-            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
             position: relative;
             width: 100%;
@@ -89,91 +76,106 @@
         }
 
         .card-front {
-            background: rgba(30, 41, 59, 0.8);
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: #1e293b;
+            border: 2px solid #334155;
         }
 
         .card-back {
             transform: rotateY(180deg);
-            background: white;
+            background: #f8fafc;
             color: #0f172a;
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: 800;
         }
 
-        .voted-glow {
-            border-color: var(--accent);
-            box-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
+        .voted {
+            border-color: #38bdf8 !important;
+            background: rgba(56, 189, 248, 0.1) !important;
         }
 
-        /* Анимация появления */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
+        /* Индикатор онлайна */
+        .online-pulse {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #22c55e;
+            animation: pulse 2s infinite;
+        }
 
-            to {
+        @keyframes pulse {
+            0% {
                 opacity: 1;
-                transform: translateY(0);
             }
-        }
 
-        .animate-in {
-            animation: fadeIn 0.5s ease out forwards;
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
         }
     </style>
 </head>
 
 <body class="p-4">
 
-    <div class="max-w-6xl mx-auto">
-        <!-- Header -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
-            <div class="text-center md:text-left">
-                <h1 class="header-font text-2xl md:text-4xl font-bold tracking-tighter text-white">
-                    NEON<span class="text-cyan-400">POKER</span>
-                </h1>
-                <div class="flex items-center gap-3 mt-2">
-                    <div id="net-status" class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_red]"></div>
-                    <span class="text-xs font-mono text-slate-400">ROOM: <span id="room-id"
-                            class="text-cyan-400">...</span></span>
-                    <button onclick="copyLink()"
-                        class="text-[10px] bg-white/5 hover:bg-white/10 px-2 py-1 rounded border border-white/10 transition">Copy
-                        Link</button>
-                </div>
+    <div class="max-w-5xl mx-auto">
+        <!-- Навигация -->
+        <nav class="flex justify-between items-center mb-10 py-4">
+            <div class="flex items-center gap-3">
+                <div class="online-pulse"></div>
+                <h1 class="text-xl font-extrabold tracking-tight">POKER<span class="text-sky-400">PLAN</span></h1>
             </div>
-
-            <div id="controls" class="hidden flex gap-3">
-                <button onclick="revealCards()"
-                    class="px-8 py-3 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-full transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-cyan-500/20">REVEAL</button>
-                <button onclick="resetGame()"
-                    class="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-full transition-all border border-white/10">RESET</button>
+            <div class="flex items-center gap-4 bg-slate-900/50 px-4 py-2 rounded-full border border-slate-800">
+                <span class="text-xs font-mono text-slate-400">Room: <span id="room-display"
+                        class="text-sky-400">...</span></span>
+                <button onclick="copyRoomLink()" class="hover:text-sky-400 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                    </svg>
+                </button>
             </div>
-        </header>
+        </nav>
 
-        <!-- Login -->
-        <div id="login-screen" class="glass max-w-sm mx-auto p-8 rounded-[2rem] mt-20">
-            <h2 class="header-font text-center mb-8 text-xl">Identify Yourself</h2>
-            <input type="text" id="username" placeholder="NAME" maxlength="12"
-                class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 mb-6 focus:outline-none focus:border-cyan-500 transition-all text-center text-lg">
-            <button onclick="joinGame()"
-                class="w-full bg-white text-black py-4 rounded-2xl font-black hover:bg-cyan-400 transition-colors uppercase tracking-widest">Connect</button>
+        <!-- Экран входа -->
+        <div id="login-screen" class="flex flex-col items-center justify-center mt-20 animate-in">
+            <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 w-full max-w-sm shadow-2xl">
+                <h2 class="text-2xl font-bold mb-6 text-center">Как тебя зовут?</h2>
+                <input type="text" id="username" placeholder="Имя или ник"
+                    class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:border-sky-500 transition-all text-lg">
+                <button onclick="joinGame()"
+                    class="w-full bg-sky-600 hover:bg-sky-500 text-white py-3 rounded-xl font-bold transition-all transform active:scale-95">Войти
+                    в комнату</button>
+            </div>
         </div>
 
-        <!-- Game Area -->
+        <!-- Основная область игры -->
         <div id="game-screen" class="hidden">
-            <div id="players-grid" class="flex flex-wrap justify-center gap-8 mb-40">
-                <!-- Players -->
+            <!-- Управление -->
+            <div class="flex justify-center gap-4 mb-12">
+                <button onclick="revealCards()"
+                    class="px-8 py-3 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-sky-500/20">Вскрываемся!</button>
+                <button onclick="resetGame()"
+                    class="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all">Новый
+                    раунд</button>
             </div>
 
-            <!-- Card Deck -->
-            <div class="fixed bottom-10 left-0 right-0 px-4">
+            <!-- Игроки -->
+            <div id="players-grid" class="flex flex-wrap justify-center gap-6 md:gap-10 mb-40">
+                <!-- Карточки игроков будут тут -->
+            </div>
+
+            <!-- Выбор карты -->
+            <div class="fixed bottom-6 left-0 right-0 px-4">
                 <div
-                    class="glass max-w-3xl mx-auto p-4 md:p-6 rounded-[2.5rem] flex justify-center gap-3 overflow-x-auto no-scrollbar">
+                    class="bg-slate-900/80 backdrop-blur-xl max-w-3xl mx-auto p-4 md:p-6 rounded-[2rem] border border-slate-700/50 flex justify-center gap-2 md:gap-4 overflow-x-auto shadow-2xl">
                     <script>
-                        ['0', '1', '2', '3', '5', '8', '13', '21', '?', '☕'].forEach(v => {
-                            document.write(`<div class="card-poker glass min-w-[3.5rem] h-20 md:w-16 md:h-24 rounded-2xl flex items-center justify-center text-xl font-bold header-font" onclick="selectCard('${v}')">${v}</div>`);
+                        ['0', '1', '2', '3', '5', '8', '13', '21', '?', '☕'].forEach(val => {
+                            document.write(`<div class="card-poker min-w-[3rem] md:w-16 h-20 md:h-24 rounded-xl flex items-center justify-center text-xl font-bold border border-slate-700" onclick="sendVote('${val}')">${val}</div>`);
                         });
                     </script>
                 </div>
@@ -182,140 +184,132 @@
     </div>
 
     <script>
-        // Инициализация с несколькими реле для надежности
+        // Конфигурация Gun.js с максимально быстрыми реле
         const gun = Gun({
             peers: [
                 'https://gun-manhattan.herokuapp.com/gun',
-                'https://relay.peer.ooo/gun',
-                'https://gundb-relay.herokuapp.com/gun',
-                'https://gun-us.herokuapp.com/gun'
-            ]
+                'https://relay.peer.ooo/gun'
+            ],
+            localStorage: false // Отключаем кэш, чтобы всегда видеть свежие данные из сети
         });
 
         const roomId = window.location.hash.replace('#', '') || Math.random().toString(36).substring(7);
         window.location.hash = roomId;
-        document.getElementById('room-id').innerText = roomId.toUpperCase();
+        document.getElementById('room-display').innerText = roomId;
 
-        const room = gun.get('neon_poker_v3_' + roomId);
+        const room = gun.get('poker_v5_' + roomId);
         const myId = Math.random().toString(36).substring(7);
         let myName = '';
         let players = {};
-
-        // Индикатор сети
-        gun.on('hi', () => {
-            document.getElementById('net-status').className = 'w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]';
-        });
+        let gameState = { revealed: false };
 
         function joinGame() {
             myName = document.getElementById('username').value.trim();
             if (!myName) return;
-
-            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
-            document.getElementById('controls').classList.remove('hidden');
 
-            // Объявляем о себе
-            sendPing();
-            // Каждые 10 секунд подтверждаем присутствие
-            setInterval(sendPing, 10000);
+            // Сразу регистрируем себя
+            updateIdentity();
+            // Поддерживаем статус "в сети"
+            setInterval(updateIdentity, 5000);
         }
 
-        function sendPing() {
+        function updateIdentity() {
             room.get('players').get(myId).put({
                 name: myName,
-                updatedAt: Date.now(),
-                online: true
+                lastSeen: Date.now()
             });
         }
 
-        function selectCard(val) {
+        function sendVote(val) {
+            // Визуальный отклик мгновенно
             document.querySelectorAll('.card-poker').forEach(c => {
                 c.classList.toggle('card-active', c.innerText === val);
             });
+            // Отправка в сеть
             room.get('players').get(myId).get('vote').put(val);
-            room.get('players').get(myId).get('updatedAt').put(Date.now());
         }
 
         function revealCards() {
-            room.get('state').put({ revealed: true, time: Date.now() });
+            room.get('state').put({ revealed: true, ts: Date.now() });
         }
 
         function resetGame() {
-            room.get('state').put({ revealed: false, time: Date.now() });
+            room.get('state').put({ revealed: false, ts: Date.now() });
             room.get('players').map().once((data, id) => {
                 room.get('players').get(id).get('vote').put(null);
             });
             document.querySelectorAll('.card-poker').forEach(c => c.classList.remove('card-active'));
         }
 
-        // --- СЛУШАТЕЛИ ---
+        // --- РЕАЛТАЙМ СЛУШАТЕЛИ ---
 
-        // Состояние игры
+        // Слушаем состояние вскрытия
         room.get('state').on(data => {
-            const isRevealed = data ? data.revealed : false;
-            document.querySelectorAll('.user-card').forEach(el => {
-                el.classList.toggle('is-revealed', isRevealed);
-            });
+            if (!data) return;
+            gameState.revealed = data.revealed;
+            renderAll();
         });
 
-        // Игроки
+        // Слушаем игроков
         room.get('players').map().on((data, id) => {
             if (!data) return;
-
-            // Если игрок молчит больше 30 секунд — он оффлайн (но мы даем запас)
-            if (Date.now() - data.updatedAt > 60000) {
-                const el = document.getElementById('p-' + id);
-                if (el) el.remove();
-                return;
+            // Скрываем "мертвых" игроков (кто не обновлялся > 15 сек)
+            if (Date.now() - data.lastSeen > 15000) {
+                delete players[id];
+            } else {
+                players[id] = data;
             }
-
-            players[id] = data;
-            renderPlayer(id, data);
+            renderAll();
         });
 
-        function renderPlayer(id, data) {
-            let el = document.getElementById('p-' + id);
-            const hasVoted = data.vote && data.vote !== 'null';
-            const isRevealed = document.querySelector('.is-revealed') !== null;
+        function renderAll() {
+            const grid = document.getElementById('players-grid');
+            // Очищаем только если состав игроков изменился, чтобы не моргало
+            // Но для простоты примера делаем полную отрисовку
+            grid.innerHTML = '';
 
-            if (!el) {
-                el = document.createElement('div');
-                el.id = 'p-' + id;
-                el.className = 'animate-in flex flex-col items-center gap-3';
-                document.getElementById('players-grid').appendChild(el);
-            }
+            Object.keys(players).forEach(id => {
+                const p = players[id];
+                const hasVoted = p.vote !== null && p.vote !== undefined && p.vote !== 'null';
 
-            el.innerHTML = `
-                <div class="user-card ${isRevealed ? 'is-revealed' : ''}">
-                    <div class="user-card-inner">
-                        <div class="card-front ${hasVoted ? 'voted-glow' : ''}">
-                            ${hasVoted ? `
-                                <div class="flex flex-col items-center">
-                                    <div class="w-3 h-3 bg-cyan-400 rounded-full animate-ping"></div>
-                                    <span class="text-[10px] text-cyan-400 mt-2 font-bold tracking-widest">READY</span>
+                const cardHtml = `
+                    <div class="flex flex-col items-center gap-3">
+                        <div class="user-card ${gameState.revealed ? 'is-revealed' : ''}">
+                            <div class="user-card-inner">
+                                <div class="card-front ${hasVoted ? 'voted' : ''}">
+                                    ${hasVoted ? `
+                                        <div class="flex flex-col items-center">
+                                            <div class="w-3 h-3 bg-sky-400 rounded-full animate-pulse shadow-[0_0_10px_#38bdf8]"></div>
+                                            <span class="text-[10px] text-sky-400 mt-2 font-bold tracking-widest uppercase">Готов</span>
+                                        </div>
+                                    ` : `
+                                        <span class="text-slate-600 text-[10px] font-bold uppercase tracking-tighter">Думает...</span>
+                                    `}
                                 </div>
-                            ` : `
-                                <span class="text-slate-600 text-[10px] font-bold uppercase">Thinking</span>
-                            `}
+                                <div class="card-back shadow-2xl border-2 border-slate-200">
+                                    ${p.vote || ''}
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-back shadow-2xl">
-                            ${data.vote || ''}
+                        <div class="text-center">
+                            <p class="text-sm font-bold ${id === myId ? 'text-sky-400' : 'text-slate-300'}">${p.name}</p>
+                            ${id === myId ? '<p class="text-[9px] text-sky-700 font-bold uppercase">Ты</p>' : ''}
                         </div>
                     </div>
-                </div>
-                <div class="text-center">
-                    <div class="text-sm font-bold tracking-tight ${id === myId ? 'text-cyan-400' : 'text-slate-200'}">${data.name}</div>
-                    ${id === myId ? '<div class="text-[9px] text-cyan-600 font-black uppercase">You</div>' : ''}
-                </div>
-            `;
+                `;
+                grid.insertAdjacentHTML('beforeend', cardHtml);
+            });
         }
 
-        function copyLink() {
+        function copyRoomLink() {
             navigator.clipboard.writeText(window.location.href);
-            const btn = event.target;
-            btn.innerText = 'COPIED!';
-            setTimeout(() => btn.innerText = 'Copy Link', 2000);
+            alert('Ссылка скопирована! Отправь её коллегам.');
         }
+
+        // Авто-очистка списка от вышедших каждые 5 сек
+        setInterval(renderAll, 5000);
     </script>
 </body>
 
