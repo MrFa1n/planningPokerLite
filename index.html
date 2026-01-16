@@ -4,10 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Astro Poker | Planning Poker</title>
-    <!-- Tailwind CSS для стилей -->
+    <title>Astro Poker | Real-time Planning</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Gun.js для синхронизации в реальном времени -->
+    <!-- Подключаем Gun.js и основные расширения -->
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -16,6 +15,7 @@
             background: radial-gradient(circle at top right, #1e293b, #0f172a);
             color: #f8fafc;
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         .glass {
@@ -27,6 +27,7 @@
         .card-poker {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
+            user-select: none;
         }
 
         .card-poker:hover {
@@ -47,8 +48,11 @@
         }
 
         .user-card-inner {
-            transition: transform 0.6s;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
+            position: relative;
+            width: 100%;
+            height: 100%;
         }
 
         .is-revealed .user-card-inner {
@@ -63,87 +67,94 @@
             left: 0;
             width: 100%;
             height: 100%;
+            border-radius: 1rem;
         }
 
         .card-back {
             transform: rotateY(180deg);
+        }
+
+        /* Скроллбар */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
         }
     </style>
 </head>
 
 <body class="p-4 md:p-8">
 
-    <!-- App Container -->
     <div id="app" class="max-w-6xl mx-auto">
-
         <!-- Header -->
         <header class="flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
-            <div>
+            <div class="text-center md:text-left">
                 <h1
-                    class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
+                    class="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
                     ASTRO POKER
                 </h1>
-                <p class="text-slate-400 text-sm">Комната: <span id="room-id" class="text-blue-300 font-mono">...</span>
-                </p>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="text-slate-400 text-sm font-mono">Room: <span id="room-id"
+                            class="text-blue-300">...</span></span>
+                    <button onclick="copyRoomLink()"
+                        class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-slate-300">Copy
+                        Link</button>
+                </div>
             </div>
 
             <div id="controls" class="hidden flex gap-3">
                 <button onclick="revealCards()"
-                    class="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-full font-semibold transition">Reveal</button>
+                    class="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl font-semibold transition shadow-lg shadow-emerald-900/20">Reveal</button>
                 <button onclick="resetGame()"
-                    class="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-full font-semibold transition">Reset</button>
+                    class="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl font-semibold transition">Reset</button>
             </div>
         </header>
 
         <!-- Login Screen -->
-        <div id="login-screen" class="glass max-w-md mx-auto p-8 rounded-3xl text-center">
-            <h2 class="text-xl mb-6 font-semibold">Введите ваше имя</h2>
-            <input type="text" id="username" placeholder="Имя игрока"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:border-blue-500">
+        <div id="login-screen" class="glass max-w-md mx-auto p-8 rounded-3xl shadow-2xl">
+            <h2 class="text-xl mb-6 font-semibold text-center">Присоединиться к игре</h2>
+            <input type="text" id="username" placeholder="Ваше имя" maxlength="15"
+                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:border-blue-500 transition-all">
             <button onclick="joinGame()"
-                class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition">Войти в игру</button>
+                class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition shadow-lg shadow-blue-900/30">Войти</button>
         </div>
 
         <!-- Game Board -->
         <div id="game-screen" class="hidden">
-            <!-- Players Grid -->
-            <div id="players-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 mb-16">
+            <div id="players-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-8 mb-32">
                 <!-- Players will be injected here -->
             </div>
 
-            <!-- Hand (Cards to pick) -->
+            <!-- Hand Selection -->
             <div class="fixed bottom-8 left-0 right-0 px-4">
-                <div class="glass max-w-4xl mx-auto p-6 rounded-3xl flex justify-center gap-2 md:gap-4 overflow-x-auto">
-                    <div class="card-poker glass w-12 h-16 md:w-16 md:h-24 rounded-xl flex items-center justify-center text-xl font-bold"
-                        onclick="selectCard('0')">0</div>
-                    <div class="card-poker glass w-12 h-16 md:w-16 md:h-24 rounded-xl flex items-center justify-center text-xl font-bold"
-                        onclick="selectCard('1')">1</div>
-                    <div class="card-poker glass w-12 h-16 md:w-16 md:h-24 rounded-xl flex items-center justify-center text-xl font-bold"
-                        onclick="selectCard('2')">2</div>
-                    <div class="card-poker glass w-12 h-16 md:w-16 md:h-24 rounded-xl flex items-center justify-center text-xl font-bold"
-                        onclick="selectCard('3')">3</div>
-                    <div class="card-poker glass w-12 h-16 md:w-16 md:h-24 rounded-xl flex items-center justify-center text-xl font-bold"
-                        onclick="selectCard('5')">5</div>
-                    <div class="card-poker glass w-12 h-16 md:w-16 md:h-24 rounded-xl flex items-center justify-center text-xl font-bold"
-                        onclick="selectCard('8')">8</div>
-                    <div class="card-poker glass w-12 h-16 md:w-16 md:h-24 rounded-xl flex items-center justify-center text-xl font-bold"
-                        onclick="selectCard('13')">13</div>
-                    <div class="card-poker glass w-12 h-16 md:w-16 md:h-24 rounded-xl flex items-center justify-center text-xl font-bold"
-                        onclick="selectCard('21')">21</div>
-                    <div class="card-poker glass w-12 h-16 md:w-16 md:h-24 rounded-xl flex items-center justify-center text-xl font-bold"
-                        onclick="selectCard('?')">?</div>
-                    <div class="card-poker glass w-12 h-16 md:w-16 md:h-24 rounded-xl flex items-center justify-center text-xl font-bold"
-                        onclick="selectCard('☕')">☕</div>
+                <div
+                    class="glass max-w-4xl mx-auto p-4 md:p-6 rounded-3xl flex justify-center gap-2 md:gap-4 overflow-x-auto shadow-2xl">
+                    <!-- Fibonacci sequence cards -->
+                    <script>
+                        const cards = ['0', '1', '2', '3', '5', '8', '13', '21', '?', '☕'];
+                        cards.forEach(val => {
+                            document.write(`
+                                <div class="card-poker glass min-w-[3rem] w-12 h-16 md:w-16 md:h-24 rounded-xl flex items-center justify-center text-xl font-bold border border-white/10" 
+                                     onclick="selectCard('${val}')">${val}</div>
+                            `);
+                        });
+                    </script>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Инициализация Gun.js (используем публичные реле)
-        const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+        // Инициализация Gun.js с несколькими реле для надежности
+        const gun = Gun([
+            'https://gun-manhattan.herokuapp.com/gun',
+            'https://gundb-relay.herokuapp.com/gun'
+        ]);
 
-        // Генерация или получение ID комнаты из URL
         let roomId = window.location.hash.replace('#', '');
         if (!roomId) {
             roomId = Math.random().toString(36).substring(7);
@@ -151,31 +162,35 @@
         }
         document.getElementById('room-id').innerText = roomId;
 
-        const room = gun.get('poker-room-' + roomId);
-        let myId = Math.random().toString(36).substring(7);
+        const room = gun.get('astro_poker_v2_' + roomId);
+        const myId = Math.random().toString(36).substring(7);
         let myName = '';
         let isRevealed = false;
+        let players = {};
 
         // Вход в игру
         function joinGame() {
-            myName = document.getElementById('username').value.trim();
+            const input = document.getElementById('username');
+            myName = input.value.trim();
             if (!myName) return alert('Введите имя');
 
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('controls').classList.remove('hidden');
 
-            updatePlayerStatus(null); // Создаем запись о себе
+            updatePlayerStatus(null);
+
+            // Heartbeat: каждые 5 секунд подтверждаем, что мы онлайн
+            setInterval(() => {
+                room.get('players').get(myId).get('updatedAt').put(Date.now());
+            }, 5000);
         }
 
-        // Выбор карты
         function selectCard(val) {
-            // Визуальный эффект выбора
             document.querySelectorAll('.card-poker').forEach(c => {
                 c.classList.remove('card-active');
                 if (c.innerText === val) c.classList.add('card-active');
             });
-
             updatePlayerStatus(val);
         }
 
@@ -193,57 +208,78 @@
 
         function resetGame() {
             room.get('state').put({ revealed: false });
-            // Сбрасываем голоса всех игроков (в простом варианте каждый обнуляет себя при получении сигнала)
-            room.get('players').map().once((data, id) => {
+            // Сбрасываем голоса
+            Object.keys(players).forEach(id => {
                 room.get('players').get(id).put({ vote: null });
             });
             document.querySelectorAll('.card-poker').forEach(c => c.classList.remove('card-active'));
         }
 
-        // Слушаем изменения состояния игры (Reveal/Reset)
+        function copyRoomLink() {
+            navigator.clipboard.writeText(window.location.href);
+            alert('Ссылка скопирована! Отправь её коллегам.');
+        }
+
+        // --- СЛУШАТЕЛИ СОБЫТИЙ ---
+
+        // Слушаем состояние вскрытия карт
         room.get('state').on((state) => {
             isRevealed = state ? state.revealed : false;
             renderPlayers();
         });
 
-        // Слушаем изменения игроков
-        let players = {};
+        // Слушаем список игроков
         room.get('players').map().on((data, id) => {
-            if (!data) return;
-            // Удаляем старых игроков (offline > 1 часа)
-            if (Date.now() - data.updatedAt > 3600000) return;
-            players[id] = data;
+            if (!data) {
+                delete players[id];
+            } else {
+                players[id] = data;
+            }
             renderPlayers();
         });
 
         function renderPlayers() {
             const grid = document.getElementById('players-grid');
+            const now = Date.now();
             grid.innerHTML = '';
 
             Object.keys(players).forEach(id => {
                 const p = players[id];
-                const hasVoted = p.vote !== null && p.vote !== undefined;
 
-                const cardHtml = `
-                    <div class="flex flex-col items-center gap-3">
-                        <div class="user-card w-20 h-28 md:w-24 md:h-32 ${isRevealed ? 'is-revealed' : ''}">
-                            <div class="user-card-inner relative w-full h-full shadow-2xl rounded-2xl">
-                                <!-- Рубашка (скрыто) -->
-                                <div class="card-front glass rounded-2xl flex items-center justify-center border-2 ${hasVoted ? 'border-blue-400 bg-blue-900/20' : 'border-slate-700'}">
-                                    ${hasVoted ? '<div class="w-4 h-4 bg-blue-400 rounded-full animate-pulse"></div>' : ''}
-                                </div>
-                                <!-- Лицо (открыто) -->
-                                <div class="card-back bg-white text-slate-900 rounded-2xl flex items-center justify-center text-2xl font-bold">
-                                    ${p.vote || ''}
-                                </div>
+                // Скрываем тех, кто не подавал признаков жизни более 10 минут
+                if (now - p.updatedAt > 600000) return;
+
+                const hasVoted = p.vote !== null && p.vote !== undefined && p.vote !== 'null';
+
+                const cardWrapper = document.createElement('div');
+                cardWrapper.className = 'flex flex-col items-center gap-3';
+
+                cardWrapper.innerHTML = `
+                    <div class="user-card w-20 h-28 md:w-24 md:h-32 ${isRevealed ? 'is-revealed' : ''}">
+                        <div class="user-card-inner shadow-2xl">
+                            <!-- Рубашка -->
+                            <div class="card-front glass flex flex-col items-center justify-center border-2 ${hasVoted ? 'border-blue-400 bg-blue-500/10' : 'border-slate-700'} transition-colors">
+                                ${hasVoted ? '<div class="w-6 h-6 bg-blue-400 rounded-full animate-pulse shadow-[0_0_15px_rgba(56,189,248,0.5)]"></div>' : '<div class="text-slate-600 text-[10px] uppercase tracking-widest font-bold">Waiting</div>'}
+                            </div>
+                            <!-- Лицо -->
+                            <div class="card-back bg-white text-slate-900 flex items-center justify-center text-3xl font-black shadow-inner">
+                                ${p.vote || ''}
                             </div>
                         </div>
-                        <span class="text-sm font-medium ${id === myId ? 'text-blue-400' : 'text-slate-300'}">${p.name} ${id === myId ? '(Вы)' : ''}</span>
                     </div>
+                    <span class="text-sm font-semibold tracking-wide ${id === myId ? 'text-blue-400' : 'text-slate-300'}">
+                        ${p.name || 'Аноним'} ${id === myId ? '<span class="text-[10px] block text-center opacity-60">(Вы)</span>' : ''}
+                    </span>
                 `;
-                grid.innerHTML += cardHtml;
+                grid.appendChild(cardWrapper);
             });
         }
+
+        // Очистка при закрытии (опционально)
+        window.addEventListener('beforeunload', () => {
+            // Мы не удаляем игрока совсем, чтобы не было мерцания при рефреше, 
+            // но помечаем его updatedAt очень старым, если нужно.
+        });
     </script>
 </body>
 
