@@ -4,51 +4,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Astro Poker | Real-time Planning</title>
+    <title>Astro Poker | Real-time</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Подключаем Gun.js и основные расширения -->
+    <!-- Основные библиотеки синхронизации -->
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap"
+        rel="stylesheet">
     <style>
+        :root {
+            --accent: #00f2ff;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at top right, #1e293b, #0f172a);
-            color: #f8fafc;
+            background: #050505;
+            color: #e2e8f0;
             min-height: 100vh;
-            overflow-x: hidden;
+            background-image:
+                radial-gradient(circle at 20% 30%, #1e293b 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, #0f172a 0%, transparent 40%);
+        }
+
+        .header-font {
+            font-family: 'Orbitron', sans-serif;
         }
 
         .glass {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(15, 23, 42, 0.6);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         }
 
         .card-poker {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer;
-            user-select: none;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .card-poker:hover {
-            transform: translateY(-10px);
-            border-color: #38bdf8;
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+            transform: translateY(-12px) scale(1.05);
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
         }
 
         .card-active {
-            background: #38bdf8 !important;
-            color: #0f172a !important;
+            background: var(--accent) !important;
+            color: #000 !important;
             transform: translateY(-15px);
-            box-shadow: 0 0 25px rgba(56, 189, 248, 0.4);
+            box-shadow: 0 0 30px var(--accent);
         }
 
         .user-card {
             perspective: 1000px;
+            width: 90px;
+            height: 130px;
         }
 
         .user-card-inner {
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
             position: relative;
             width: 100%;
@@ -67,80 +82,98 @@
             left: 0;
             width: 100%;
             height: 100%;
-            border-radius: 1rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-front {
+            background: rgba(30, 41, 59, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.1);
         }
 
         .card-back {
             transform: rotateY(180deg);
+            background: white;
+            color: #0f172a;
+            font-size: 2rem;
+            font-weight: 800;
         }
 
-        /* Скроллбар */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+        .voted-glow {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
+        /* Анимация появления */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-in {
+            animation: fadeIn 0.5s ease out forwards;
         }
     </style>
 </head>
 
-<body class="p-4 md:p-8">
+<body class="p-4">
 
-    <div id="app" class="max-w-6xl mx-auto">
+    <div class="max-w-6xl mx-auto">
         <!-- Header -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
             <div class="text-center md:text-left">
-                <h1
-                    class="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
-                    ASTRO POKER
+                <h1 class="header-font text-2xl md:text-4xl font-bold tracking-tighter text-white">
+                    NEON<span class="text-cyan-400">POKER</span>
                 </h1>
-                <div class="flex items-center gap-2 mt-1">
-                    <span class="text-slate-400 text-sm font-mono">Room: <span id="room-id"
-                            class="text-blue-300">...</span></span>
-                    <button onclick="copyRoomLink()"
-                        class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-slate-300">Copy
+                <div class="flex items-center gap-3 mt-2">
+                    <div id="net-status" class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_red]"></div>
+                    <span class="text-xs font-mono text-slate-400">ROOM: <span id="room-id"
+                            class="text-cyan-400">...</span></span>
+                    <button onclick="copyLink()"
+                        class="text-[10px] bg-white/5 hover:bg-white/10 px-2 py-1 rounded border border-white/10 transition">Copy
                         Link</button>
                 </div>
             </div>
 
             <div id="controls" class="hidden flex gap-3">
                 <button onclick="revealCards()"
-                    class="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl font-semibold transition shadow-lg shadow-emerald-900/20">Reveal</button>
+                    class="px-8 py-3 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-full transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-cyan-500/20">REVEAL</button>
                 <button onclick="resetGame()"
-                    class="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl font-semibold transition">Reset</button>
+                    class="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-full transition-all border border-white/10">RESET</button>
             </div>
         </header>
 
-        <!-- Login Screen -->
-        <div id="login-screen" class="glass max-w-md mx-auto p-8 rounded-3xl shadow-2xl">
-            <h2 class="text-xl mb-6 font-semibold text-center">Присоединиться к игре</h2>
-            <input type="text" id="username" placeholder="Ваше имя" maxlength="15"
-                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:border-blue-500 transition-all">
+        <!-- Login -->
+        <div id="login-screen" class="glass max-w-sm mx-auto p-8 rounded-[2rem] mt-20">
+            <h2 class="header-font text-center mb-8 text-xl">Identify Yourself</h2>
+            <input type="text" id="username" placeholder="NAME" maxlength="12"
+                class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 mb-6 focus:outline-none focus:border-cyan-500 transition-all text-center text-lg">
             <button onclick="joinGame()"
-                class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition shadow-lg shadow-blue-900/30">Войти</button>
+                class="w-full bg-white text-black py-4 rounded-2xl font-black hover:bg-cyan-400 transition-colors uppercase tracking-widest">Connect</button>
         </div>
 
-        <!-- Game Board -->
+        <!-- Game Area -->
         <div id="game-screen" class="hidden">
-            <div id="players-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-8 mb-32">
-                <!-- Players will be injected here -->
+            <div id="players-grid" class="flex flex-wrap justify-center gap-8 mb-40">
+                <!-- Players -->
             </div>
 
-            <!-- Hand Selection -->
-            <div class="fixed bottom-8 left-0 right-0 px-4">
+            <!-- Card Deck -->
+            <div class="fixed bottom-10 left-0 right-0 px-4">
                 <div
-                    class="glass max-w-4xl mx-auto p-4 md:p-6 rounded-3xl flex justify-center gap-2 md:gap-4 overflow-x-auto shadow-2xl">
-                    <!-- Fibonacci sequence cards -->
+                    class="glass max-w-3xl mx-auto p-4 md:p-6 rounded-[2.5rem] flex justify-center gap-3 overflow-x-auto no-scrollbar">
                     <script>
-                        const cards = ['0', '1', '2', '3', '5', '8', '13', '21', '?', '☕'];
-                        cards.forEach(val => {
-                            document.write(`
-                                <div class="card-poker glass min-w-[3rem] w-12 h-16 md:w-16 md:h-24 rounded-xl flex items-center justify-center text-xl font-bold border border-white/10" 
-                                     onclick="selectCard('${val}')">${val}</div>
-                            `);
+                        ['0', '1', '2', '3', '5', '8', '13', '21', '?', '☕'].forEach(v => {
+                            document.write(`<div class="card-poker glass min-w-[3.5rem] h-20 md:w-16 md:h-24 rounded-2xl flex items-center justify-center text-xl font-bold header-font" onclick="selectCard('${v}')">${v}</div>`);
                         });
                     </script>
                 </div>
@@ -149,137 +182,140 @@
     </div>
 
     <script>
-        // Инициализация Gun.js с несколькими реле для надежности
-        const gun = Gun([
-            'https://gun-manhattan.herokuapp.com/gun',
-            'https://gundb-relay.herokuapp.com/gun'
-        ]);
+        // Инициализация с несколькими реле для надежности
+        const gun = Gun({
+            peers: [
+                'https://gun-manhattan.herokuapp.com/gun',
+                'https://relay.peer.ooo/gun',
+                'https://gundb-relay.herokuapp.com/gun',
+                'https://gun-us.herokuapp.com/gun'
+            ]
+        });
 
-        let roomId = window.location.hash.replace('#', '');
-        if (!roomId) {
-            roomId = Math.random().toString(36).substring(7);
-            window.location.hash = roomId;
-        }
-        document.getElementById('room-id').innerText = roomId;
+        const roomId = window.location.hash.replace('#', '') || Math.random().toString(36).substring(7);
+        window.location.hash = roomId;
+        document.getElementById('room-id').innerText = roomId.toUpperCase();
 
-        const room = gun.get('astro_poker_v2_' + roomId);
+        const room = gun.get('neon_poker_v3_' + roomId);
         const myId = Math.random().toString(36).substring(7);
         let myName = '';
-        let isRevealed = false;
         let players = {};
 
-        // Вход в игру
-        function joinGame() {
-            const input = document.getElementById('username');
-            myName = input.value.trim();
-            if (!myName) return alert('Введите имя');
+        // Индикатор сети
+        gun.on('hi', () => {
+            document.getElementById('net-status').className = 'w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]';
+        });
 
-            document.getElementById('login-screen').classList.add('hidden');
+        function joinGame() {
+            myName = document.getElementById('username').value.trim();
+            if (!myName) return;
+
+            document.getElementById('login-screen').style.display = 'none';
             document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('controls').classList.remove('hidden');
 
-            updatePlayerStatus(null);
+            // Объявляем о себе
+            sendPing();
+            // Каждые 10 секунд подтверждаем присутствие
+            setInterval(sendPing, 10000);
+        }
 
-            // Heartbeat: каждые 5 секунд подтверждаем, что мы онлайн
-            setInterval(() => {
-                room.get('players').get(myId).get('updatedAt').put(Date.now());
-            }, 5000);
+        function sendPing() {
+            room.get('players').get(myId).put({
+                name: myName,
+                updatedAt: Date.now(),
+                online: true
+            });
         }
 
         function selectCard(val) {
             document.querySelectorAll('.card-poker').forEach(c => {
-                c.classList.remove('card-active');
-                if (c.innerText === val) c.classList.add('card-active');
+                c.classList.toggle('card-active', c.innerText === val);
             });
-            updatePlayerStatus(val);
-        }
-
-        function updatePlayerStatus(val) {
-            room.get('players').get(myId).put({
-                name: myName,
-                vote: val,
-                updatedAt: Date.now()
-            });
+            room.get('players').get(myId).get('vote').put(val);
+            room.get('players').get(myId).get('updatedAt').put(Date.now());
         }
 
         function revealCards() {
-            room.get('state').put({ revealed: true });
+            room.get('state').put({ revealed: true, time: Date.now() });
         }
 
         function resetGame() {
-            room.get('state').put({ revealed: false });
-            // Сбрасываем голоса
-            Object.keys(players).forEach(id => {
-                room.get('players').get(id).put({ vote: null });
+            room.get('state').put({ revealed: false, time: Date.now() });
+            room.get('players').map().once((data, id) => {
+                room.get('players').get(id).get('vote').put(null);
             });
             document.querySelectorAll('.card-poker').forEach(c => c.classList.remove('card-active'));
         }
 
-        function copyRoomLink() {
-            navigator.clipboard.writeText(window.location.href);
-            alert('Ссылка скопирована! Отправь её коллегам.');
-        }
+        // --- СЛУШАТЕЛИ ---
 
-        // --- СЛУШАТЕЛИ СОБЫТИЙ ---
-
-        // Слушаем состояние вскрытия карт
-        room.get('state').on((state) => {
-            isRevealed = state ? state.revealed : false;
-            renderPlayers();
+        // Состояние игры
+        room.get('state').on(data => {
+            const isRevealed = data ? data.revealed : false;
+            document.querySelectorAll('.user-card').forEach(el => {
+                el.classList.toggle('is-revealed', isRevealed);
+            });
         });
 
-        // Слушаем список игроков
+        // Игроки
         room.get('players').map().on((data, id) => {
-            if (!data) {
-                delete players[id];
-            } else {
-                players[id] = data;
+            if (!data) return;
+
+            // Если игрок молчит больше 30 секунд — он оффлайн (но мы даем запас)
+            if (Date.now() - data.updatedAt > 60000) {
+                const el = document.getElementById('p-' + id);
+                if (el) el.remove();
+                return;
             }
-            renderPlayers();
+
+            players[id] = data;
+            renderPlayer(id, data);
         });
 
-        function renderPlayers() {
-            const grid = document.getElementById('players-grid');
-            const now = Date.now();
-            grid.innerHTML = '';
+        function renderPlayer(id, data) {
+            let el = document.getElementById('p-' + id);
+            const hasVoted = data.vote && data.vote !== 'null';
+            const isRevealed = document.querySelector('.is-revealed') !== null;
 
-            Object.keys(players).forEach(id => {
-                const p = players[id];
+            if (!el) {
+                el = document.createElement('div');
+                el.id = 'p-' + id;
+                el.className = 'animate-in flex flex-col items-center gap-3';
+                document.getElementById('players-grid').appendChild(el);
+            }
 
-                // Скрываем тех, кто не подавал признаков жизни более 10 минут
-                if (now - p.updatedAt > 600000) return;
-
-                const hasVoted = p.vote !== null && p.vote !== undefined && p.vote !== 'null';
-
-                const cardWrapper = document.createElement('div');
-                cardWrapper.className = 'flex flex-col items-center gap-3';
-
-                cardWrapper.innerHTML = `
-                    <div class="user-card w-20 h-28 md:w-24 md:h-32 ${isRevealed ? 'is-revealed' : ''}">
-                        <div class="user-card-inner shadow-2xl">
-                            <!-- Рубашка -->
-                            <div class="card-front glass flex flex-col items-center justify-center border-2 ${hasVoted ? 'border-blue-400 bg-blue-500/10' : 'border-slate-700'} transition-colors">
-                                ${hasVoted ? '<div class="w-6 h-6 bg-blue-400 rounded-full animate-pulse shadow-[0_0_15px_rgba(56,189,248,0.5)]"></div>' : '<div class="text-slate-600 text-[10px] uppercase tracking-widest font-bold">Waiting</div>'}
-                            </div>
-                            <!-- Лицо -->
-                            <div class="card-back bg-white text-slate-900 flex items-center justify-center text-3xl font-black shadow-inner">
-                                ${p.vote || ''}
-                            </div>
+            el.innerHTML = `
+                <div class="user-card ${isRevealed ? 'is-revealed' : ''}">
+                    <div class="user-card-inner">
+                        <div class="card-front ${hasVoted ? 'voted-glow' : ''}">
+                            ${hasVoted ? `
+                                <div class="flex flex-col items-center">
+                                    <div class="w-3 h-3 bg-cyan-400 rounded-full animate-ping"></div>
+                                    <span class="text-[10px] text-cyan-400 mt-2 font-bold tracking-widest">READY</span>
+                                </div>
+                            ` : `
+                                <span class="text-slate-600 text-[10px] font-bold uppercase">Thinking</span>
+                            `}
+                        </div>
+                        <div class="card-back shadow-2xl">
+                            ${data.vote || ''}
                         </div>
                     </div>
-                    <span class="text-sm font-semibold tracking-wide ${id === myId ? 'text-blue-400' : 'text-slate-300'}">
-                        ${p.name || 'Аноним'} ${id === myId ? '<span class="text-[10px] block text-center opacity-60">(Вы)</span>' : ''}
-                    </span>
-                `;
-                grid.appendChild(cardWrapper);
-            });
+                </div>
+                <div class="text-center">
+                    <div class="text-sm font-bold tracking-tight ${id === myId ? 'text-cyan-400' : 'text-slate-200'}">${data.name}</div>
+                    ${id === myId ? '<div class="text-[9px] text-cyan-600 font-black uppercase">You</div>' : ''}
+                </div>
+            `;
         }
 
-        // Очистка при закрытии (опционально)
-        window.addEventListener('beforeunload', () => {
-            // Мы не удаляем игрока совсем, чтобы не было мерцания при рефреше, 
-            // но помечаем его updatedAt очень старым, если нужно.
-        });
+        function copyLink() {
+            navigator.clipboard.writeText(window.location.href);
+            const btn = event.target;
+            btn.innerText = 'COPIED!';
+            setTimeout(() => btn.innerText = 'Copy Link', 2000);
+        }
     </script>
 </body>
 
