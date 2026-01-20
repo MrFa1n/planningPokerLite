@@ -4,44 +4,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elite Planning Poker</title>
+    <title>Astro Poker | Pro Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Библиотека MQTT для связи -->
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap"
+        rel="stylesheet">
     <style>
         body {
-            font-family: 'Montserrat', sans-serif;
-            background: #0f111a;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #090a0f;
             color: #ffffff;
-            overflow-x: hidden;
+            min-height: 100vh;
         }
 
-        .bg-card {
-            background: #1a1d29;
-            border: 1px solid #2d3245;
+        .bg-glass {
+            background: rgba(23, 25, 35, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .accent-color {
-            color: #00f2ff;
-        }
-
-        .bg-accent {
-            background: #00f2ff;
-        }
-
-        /* Стили карт */
+        /* Карточки игроков */
         .poker-card {
             perspective: 1000px;
-            width: 80px;
-            height: 115px;
+            width: 90px;
+            height: 130px;
         }
 
         .poker-card-inner {
             position: relative;
             width: 100%;
             height: 100%;
-            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
             transform-style: preserve-3d;
         }
 
@@ -54,133 +47,203 @@
             width: 100%;
             height: 100%;
             backface-visibility: hidden;
-            border-radius: 12px;
+            border-radius: 16px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            font-weight: 900;
         }
 
         .card-front {
-            background: #232736;
-            border: 2px solid #3d445e;
+            background: #1a1c26;
+            border: 2px solid #2d3142;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
         }
 
         .card-back {
-            background: #ffffff;
-            color: #0f111a;
+            background: #f4f4f5;
+            color: #090a0f;
             transform: rotateY(180deg);
+            font-size: 2rem;
+            font-weight: 800;
         }
 
-        .voted-border {
+        /* Цвета ролей */
+        .role-fe {
+            color: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        .role-be {
+            color: #ef4444;
+            border-color: #ef4444;
+        }
+
+        .role-qa {
+            color: #10b981;
+            border-color: #10b981;
+        }
+
+        .role-ds {
+            color: #a855f7;
+            border-color: #a855f7;
+        }
+
+        .role-pm {
+            color: #f59e0b;
+            border-color: #f59e0b;
+        }
+
+        .voted-glow {
             border-color: #00f2ff !important;
-            box-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
         }
 
-        /* Кнопки выбора */
+        /* Кнопки карт */
         .choice-btn {
-            transition: all 0.2s;
-            background: #1a1d29;
-            border: 1px solid #2d3245;
+            background: #1a1c26;
+            border: 1px solid #2d3142;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .choice-btn:hover {
-            transform: translateY(-5px);
             border-color: #00f2ff;
+            transform: translateY(-4px);
         }
 
         .choice-btn.active {
             background: #00f2ff;
             color: #000;
-            box-shadow: 0 0 20px #00f2ff;
+            font-weight: 800;
+            transform: translateY(-8px);
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
         }
     </style>
 </head>
 
-<body class="min-h-screen">
+<body class="p-4 md:p-8">
 
-    <div class="max-w-6xl mx-auto p-6">
-        <!-- Шапка -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
-            <h1 class="text-3xl font-black tracking-tighter">PLANNING<span class="accent-color">POKER</span></h1>
-
-            <div class="flex items-center gap-4 bg-card px-4 py-2 rounded-2xl">
-                <div id="status-dot" class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
-                <span class="text-xs font-bold opacity-70 uppercase tracking-widest">Room: <span
-                        id="room-id">...</span></span>
-                <button onclick="copyRoomLink()" class="hover:text-cyan-400 transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-                    </svg>
-                </button>
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="flex flex-col lg:flex-row justify-between items-center mb-10 gap-6">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-cyan-500/10 rounded-2xl border border-cyan-500/20">
+                    <div id="net-status" class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_red]"></div>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-extrabold tracking-tight">PLANNING<span class="text-cyan-400">POKER</span>
+                    </h1>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Room ID: <span
+                            id="room-id" class="text-slate-300">...</span></p>
+                </div>
             </div>
 
-            <div id="controls" class="hidden flex gap-3">
+            <div id="controls" class="hidden flex items-center gap-3">
                 <button onclick="broadcastAction('reveal')"
-                    class="bg-accent text-black px-6 py-2 rounded-full font-bold hover:scale-105 transition">REVEAL</button>
+                    class="px-8 py-3 bg-white text-black font-black rounded-2xl hover:bg-cyan-400 transition transform active:scale-95 shadow-xl">Вскрыть
+                    карты</button>
                 <button onclick="broadcastAction('reset')"
-                    class="bg-white/10 hover:bg-white/20 px-6 py-2 rounded-full font-bold transition">RESET</button>
+                    class="px-6 py-3 bg-slate-800 text-slate-300 font-bold rounded-2xl hover:bg-slate-700 transition">Сброс</button>
             </div>
         </header>
 
-        <!-- Экран входа -->
+        <!-- Login Screen -->
         <div id="login-screen"
-            class="max-w-md mx-auto bg-card p-10 rounded-3xl shadow-2xl text-center border-t-4 border-cyan-500">
-            <h2 class="text-2xl font-bold mb-6">Готовы к оценке?</h2>
-            <input type="text" id="username" placeholder="Ваше имя" maxlength="12"
-                class="w-full bg-black/30 border border-slate-700 rounded-xl px-5 py-4 mb-6 focus:outline-none focus:border-cyan-500 text-lg text-center">
-            <button onclick="joinGame()"
-                class="w-full bg-accent text-black py-4 rounded-xl font-black text-lg hover:shadow-[0_0_20px_#00f2ff] transition">ПРИСОЕДИНИТЬСЯ</button>
+            class="max-w-lg mx-auto bg-glass p-8 md:p-12 rounded-[2.5rem] shadow-2xl border border-white/5">
+            <h2 class="text-3xl font-black mb-8 text-center uppercase tracking-tight">Вход в систему</h2>
+
+            <div class="space-y-6">
+                <div>
+                    <label
+                        class="block text-xs font-black text-slate-500 uppercase mb-2 ml-1 tracking-widest">Имя</label>
+                    <input type="text" id="username" placeholder="NAME" maxlength="12"
+                        class="w-full bg-black/40 border border-slate-800 rounded-2xl px-6 py-4 focus:outline-none focus:border-cyan-500 text-lg transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-slate-500 uppercase mb-2 ml-1 tracking-widest">Ваша
+                        специализация</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="setRole('FE', this)"
+                            class="role-btn py-3 bg-black/20 border border-slate-800 rounded-xl text-xs font-bold hover:border-blue-500 transition">Frontend</button>
+                        <button onclick="setRole('BE', this)"
+                            class="role-btn py-3 bg-black/20 border border-slate-800 rounded-xl text-xs font-bold hover:border-red-500 transition">Backend</button>
+                        <button onclick="setRole('QA', this)"
+                            class="role-btn py-3 bg-black/20 border border-slate-800 rounded-xl text-xs font-bold hover:border-emerald-500 transition">QA</button>
+                        <button onclick="setRole('DS', this)"
+                            class="role-btn py-3 bg-black/20 border border-slate-800 rounded-xl text-xs font-bold hover:border-purple-500 transition">Design</button>
+                        <button onclick="setRole('PM', this)"
+                            class="role-btn py-3 bg-black/20 border border-slate-800 rounded-xl text-xs font-bold hover:border-amber-500 transition">PM</button>
+                        <button onclick="setRole('??', this)"
+                            class="role-btn py-3 bg-black/20 border border-slate-800 rounded-xl text-xs font-bold transition">Other</button>
+                    </div>
+                </div>
+
+                <label
+                    class="flex items-center gap-3 p-4 bg-white/5 rounded-2xl cursor-pointer hover:bg-white/10 transition">
+                    <input type="checkbox" id="is-observer" class="w-5 h-5 accent-cyan-400">
+                    <div class="flex flex-col">
+                        <span class="text-sm font-bold">Режим наблюдателя</span>
+                        <span class="text-[10px] text-slate-500">Вы сможете видеть результаты, но не будете
+                            голосовать</span>
+                    </div>
+                </label>
+
+                <button onclick="joinGame()"
+                    class="w-full bg-cyan-500 text-black py-5 rounded-3xl font-black text-lg hover:shadow-[0_0_30px_rgba(6,182,212,0.4)] transition transform active:scale-95 uppercase tracking-widest mt-4">Connect</button>
+            </div>
         </div>
 
-        <!-- Игровое поле -->
+        <!-- Game Screen -->
         <div id="game-screen" class="hidden">
-            <div id="players-grid" class="flex flex-wrap justify-center gap-10 mb-40">
-                <!-- Карточки игроков появятся здесь -->
+            <div id="players-grid" class="flex flex-wrap justify-center gap-8 md:gap-12 mb-48">
+                <!-- Карточки игроков -->
             </div>
 
-            <!-- Выбор карты (Sticky Bottom) -->
-            <div class="fixed bottom-8 left-0 right-0 px-4">
-                <div
-                    class="max-w-4xl mx-auto bg-card/80 backdrop-blur-xl p-4 rounded-[2.5rem] flex justify-center gap-3 overflow-x-auto border border-white/5">
-                    <script>
-                        ['0', '1', '2', '3', '5', '8', '13', '21', '?', '☕'].forEach(v => {
-                            document.write(`<button onclick="pickCard('${v}')" class="choice-btn min-w-[3.5rem] h-20 rounded-2xl font-bold text-xl">${v}</button>`);
-                        });
-                    </script>
+            <!-- Hand Selection -->
+            <div id="hand-panel" class="fixed bottom-6 left-0 right-0 px-4">
+                <div class="max-w-5xl mx-auto bg-glass p-4 rounded-[2.5rem] flex flex-col gap-4 shadow-3xl">
+                    <div class="flex justify-center items-center gap-2 overflow-x-auto no-scrollbar py-2">
+                        <script>
+                            for (let i = 1; i <= 20; i++) {
+                                document.write(`<button onclick="pickCard('${i}')" class="choice-btn min-w-[3.2rem] h-16 rounded-xl font-extrabold text-lg">${i}</button>`);
+                            }
+                            document.write(`<button onclick="pickCard('?')" class="choice-btn min-w-[3.2rem] h-16 rounded-xl font-extrabold text-lg">?</button>`);
+                            document.write(`<button onclick="pickCard('☕')" class="choice-btn min-w-[3.2rem] h-16 rounded-xl font-extrabold text-lg">☕</button>`);
+                        </script>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Генерируем ID комнаты и ID игрока
         const roomHash = window.location.hash.replace('#', '') || Math.random().toString(36).substring(7);
         window.location.hash = roomHash;
         document.getElementById('room-id').innerText = roomHash.toUpperCase();
 
-        const myPlayerId = Math.random().toString(36).substring(7);
+        const myId = Math.random().toString(36).substring(7);
         let myName = '';
+        let myRole = '??';
+        let isObserver = false;
         let players = {};
         let isRevealed = false;
 
-        // Настройки MQTT (используем публичный брокер HiveMQ)
-        const topic = `astro_poker/rooms/${roomHash}`;
+        const topic = `pro_poker/rooms/${roomHash}`;
         const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
 
         client.on('connect', () => {
-            document.getElementById('status-dot').classList.replace('bg-red-500', 'bg-emerald-500');
+            document.getElementById('net-status').className = 'w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]';
             client.subscribe(topic);
         });
 
-        // Слушаем входящие сообщения
-        client.on('message', (t, message) => {
-            const data = JSON.parse(message.toString());
-
+        client.on('message', (t, msg) => {
+            const data = JSON.parse(msg.toString());
             if (data.type === 'update') {
-                players[data.id] = { name: data.name, vote: data.vote, ts: Date.now() };
+                players[data.id] = { ...data, ts: Date.now() };
                 render();
             } else if (data.type === 'reveal') {
                 isRevealed = true;
@@ -191,25 +254,29 @@
                 document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('active'));
                 render();
             } else if (data.type === 'ping') {
-                // Кто-то зашел, отправляем ему свои данные
-                if (myName) sendUpdate(players[myPlayerId]?.vote || null);
+                if (myName) sendUpdate(players[myId]?.vote || null);
             }
         });
 
+        function setRole(role, btn) {
+            myRole = role;
+            document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('bg-cyan-500/20', 'border-cyan-500'));
+            btn.classList.add('bg-cyan-500/20', 'border-cyan-500');
+        }
+
         function joinGame() {
             myName = document.getElementById('username').value.trim();
-            if (!myName) return;
+            isObserver = document.getElementById('is-observer').checked;
+            if (!myName) return alert('Введите имя');
 
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('controls').classList.remove('hidden');
+            if (isObserver) document.getElementById('hand-panel').classList.add('hidden');
 
-            // Сообщаем всем, что мы зашли
             broadcastAction('ping');
             sendUpdate(null);
-
-            // Каждые 5 секунд подтверждаем присутствие (heartbeat)
-            setInterval(() => sendUpdate(players[myPlayerId]?.vote || null), 5000);
+            setInterval(() => sendUpdate(players[myId]?.vote || null), 5000);
         }
 
         function pickCard(val) {
@@ -220,13 +287,9 @@
         }
 
         function sendUpdate(vote) {
-            const payload = {
-                type: 'update',
-                id: myPlayerId,
-                name: myName,
-                vote: vote
-            };
-            client.publish(topic, JSON.stringify(payload));
+            client.publish(topic, JSON.stringify({
+                type: 'update', id: myId, name: myName, role: myRole, isObserver, vote: vote
+            }));
         }
 
         function broadcastAction(type) {
@@ -240,26 +303,34 @@
 
             Object.keys(players).forEach(id => {
                 const p = players[id];
-                // Убираем тех, кто не пинговался > 15 сек
                 if (now - p.ts > 15000) return;
 
                 const hasVoted = p.vote !== null && p.vote !== undefined;
+                const roleClass = `role-${p.role.toLowerCase()}`;
 
                 const cardMarkup = `
                     <div class="flex flex-col items-center gap-4">
                         <div class="poker-card ${isRevealed ? 'is-flipped' : ''}">
                             <div class="poker-card-inner">
                                 <div class="card-face card-front ${hasVoted ? 'voted-border' : ''}">
-                                    ${hasVoted ? '<div class="w-4 h-4 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_10px_#00f2ff]"></div>' : '<span class="text-[10px] opacity-20 uppercase font-black">Think</span>'}
+                                    ${p.isObserver ? `
+                                        <svg class="w-8 h-8 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                        <span class="text-[8px] font-black uppercase tracking-widest opacity-20 mt-2">Observing</span>
+                                    ` : `
+                                        ${hasVoted ? '<div class="w-4 h-4 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_15px_#00f2ff]"></div>' : '<span class="text-[10px] opacity-20 font-black uppercase tracking-widest">Thinking</span>'}
+                                    `}
                                 </div>
-                                <div class="card-face card-back shadow-2xl border-2 border-white/10">
+                                <div class="card-face card-back shadow-2xl">
                                     ${p.vote || ''}
                                 </div>
                             </div>
                         </div>
                         <div class="text-center">
-                            <p class="font-bold text-sm tracking-widest ${id === myPlayerId ? 'accent-color' : ''}">${p.name.toUpperCase()}</p>
-                            ${id === myPlayerId ? '<p class="text-[8px] font-black opacity-50">YOU</p>' : ''}
+                            <div class="flex items-center justify-center gap-2 mb-1">
+                                <span class="text-[9px] px-2 py-0.5 rounded-full border ${roleClass} font-black">${p.role}</span>
+                            </div>
+                            <p class="font-bold text-sm tracking-tight ${id === myId ? 'text-cyan-400' : 'text-slate-200'}">${p.name}</p>
+                            ${id === myId ? '<p class="text-[8px] font-black opacity-30 uppercase">You</p>' : ''}
                         </div>
                     </div>
                 `;
@@ -267,13 +338,7 @@
             });
         }
 
-        function copyRoomLink() {
-            navigator.clipboard.writeText(window.location.href);
-            alert('Ссылка скопирована!');
-        }
-
-        // Очистка списка каждые 2 сек
-        setInterval(render, 2000);
+        setInterval(render, 3000);
     </script>
 </body>
 
