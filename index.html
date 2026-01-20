@@ -85,16 +85,22 @@
             background: rgba(16, 185, 129, 0.1);
         }
 
-        .role-ds {
-            color: #a855f7;
-            border-color: #a855f7;
-            background: rgba(168, 85, 247, 0.1);
+        .role-ba {
+            color: #6366f1;
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.1);
         }
 
         .role-pm {
             color: #f59e0b;
             border-color: #f59e0b;
             background: rgba(245, 158, 11, 0.1);
+        }
+
+        .role-other {
+            color: #94a3b8;
+            border-color: #475569;
+            background: rgba(148, 163, 184, 0.1);
         }
 
         .voted-border {
@@ -125,11 +131,6 @@
             border-color: #00f2ff;
         }
 
-        .hand-locked {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
         .stats-panel {
             animation: slideDown 0.4s ease-out;
         }
@@ -151,21 +152,20 @@
 <body class="p-4 md:p-6">
 
     <div class="max-w-7xl mx-auto">
-        <!-- Header -->
         <header
-            class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4 bg-glass p-4 rounded-3xl">
+            class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4 bg-glass p-4 rounded-3xl shadow-xl">
             <div class="flex items-center gap-4">
                 <div
                     class="w-10 h-10 bg-cyan-500/20 rounded-xl flex items-center justify-center border border-cyan-500/30">
-                    <div id="net-status" class="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                    <div id="net-status" class="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_8px_red]"></div>
                 </div>
                 <div>
-                    <h1 class="text-xl font-black italic tracking-tighter">Planning<span
+                    <h1 class="text-xl font-black italic tracking-tighter uppercase">Planning<span
                             class="text-cyan-400">POKER</span>
                     </h1>
                     <button onclick="copyRoomLink()"
-                        class="text-[10px] text-slate-400 hover:text-cyan-400 flex items-center gap-1 transition">
-                        ROOM: <span id="room-id" class="font-bold">...</span>
+                        class="text-[10px] text-slate-400 hover:text-cyan-400 flex items-center gap-1 transition font-bold uppercase tracking-wider">
+                        ROOM: <span id="room-id" class="text-white">...</span>
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
                                 d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
@@ -177,42 +177,41 @@
 
             <div id="user-badge"
                 class="hidden flex items-center gap-3 bg-white/5 p-2 pr-4 rounded-2xl border border-white/5">
-                <div id="my-role-icon" class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs">?
-                </div>
+                <div id="my-role-icon"
+                    class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[10px] border">?</div>
                 <div>
-                    <p class="text-[10px] text-slate-500 font-bold uppercase leading-none">Вы вошли как</p>
+                    <p class="text-[9px] text-slate-500 font-black uppercase leading-none mb-1">Вы вошли как</p>
                     <p id="my-display-name" class="font-bold text-sm text-cyan-400 leading-tight">...</p>
                 </div>
             </div>
 
             <div id="controls" class="hidden flex items-center gap-2">
-                <div id="pm-only-msg" class="text-[10px] text-slate-500 mr-2 font-bold uppercase hidden">Только PM
+                <div id="pm-only-msg"
+                    class="text-[9px] text-slate-500 mr-2 font-black uppercase hidden tracking-widest">Только PM
                     управляет</div>
                 <button id="btn-reveal" onclick="broadcastAction('reveal')"
-                    class="px-6 py-2 bg-cyan-500 text-black font-black rounded-xl hover:scale-105 transition disabled:opacity-30 disabled:hover:scale-100 shadow-lg shadow-cyan-500/20">Reveal</button>
+                    class="px-6 py-2 bg-cyan-500 text-black font-black rounded-xl hover:scale-105 transition disabled:opacity-30 disabled:hover:scale-100 shadow-lg shadow-cyan-500/20 uppercase text-xs">Reveal</button>
                 <button id="btn-reset" onclick="broadcastAction('reset')"
-                    class="px-6 py-2 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition disabled:opacity-30">Reset</button>
+                    class="px-6 py-2 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition disabled:opacity-30 uppercase text-xs">Reset</button>
             </div>
         </header>
 
-        <!-- Stats Panel -->
         <div id="stats-panel"
             class="stats-panel hidden mb-8 bg-cyan-500/10 border border-cyan-500/20 p-6 rounded-[2rem] flex flex-wrap justify-around gap-4 text-center">
-            <div class="px-4">
-                <p class="text-[10px] text-cyan-500 font-bold uppercase mb-1 tracking-widest">Среднее</p>
+            <div class="px-4 text-center">
+                <p class="text-[10px] text-cyan-500 font-black uppercase mb-1 tracking-widest">Среднее</p>
                 <p id="stat-avg" class="text-4xl font-black text-white">-</p>
             </div>
-            <div class="px-4 border-x border-white/5">
-                <p class="text-[10px] text-cyan-500 font-bold uppercase mb-1 tracking-widest">Медиана</p>
+            <div class="px-4 border-x border-white/10">
+                <p class="text-[10px] text-cyan-500 font-black uppercase mb-1 tracking-widest">Медиана</p>
                 <p id="stat-med" class="text-4xl font-black text-white">-</p>
             </div>
             <div class="px-4">
-                <p class="text-[10px] text-cyan-500 font-bold uppercase mb-1 tracking-widest">Популярное</p>
+                <p class="text-[10px] text-cyan-500 font-black uppercase mb-1 tracking-widest">Популярное</p>
                 <p id="stat-mode" class="text-4xl font-black text-white">-</p>
             </div>
         </div>
 
-        <!-- Login Screen -->
         <div id="login-screen" class="max-w-md mx-auto bg-glass p-8 rounded-[2.5rem] shadow-2xl border border-white/5">
             <h2 class="text-2xl font-black mb-6 text-center tracking-tight">ВХОД В КОМНАТУ</h2>
             <div class="space-y-4">
@@ -220,51 +219,50 @@
                     class="w-full bg-black/40 border border-slate-800 rounded-2xl px-6 py-4 focus:border-cyan-500 transition-all outline-none text-center font-bold">
                 <div class="grid grid-cols-3 gap-2">
                     <button onclick="setRole('FE', this)"
-                        class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-bold hover:border-slate-600 transition">Frontend</button>
+                        class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase">Frontend</button>
                     <button onclick="setRole('BE', this)"
-                        class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-bold hover:border-slate-600 transition">Backend</button>
+                        class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase">Backend</button>
                     <button onclick="setRole('QA', this)"
-                        class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-bold hover:border-slate-600 transition">QA</button>
-                    <button onclick="setRole('DS', this)"
-                        class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-bold hover:border-slate-600 transition">Design</button>
+                        class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase">QA</button>
+                    <button onclick="setRole('BA', this)"
+                        class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase">BA/SA</button>
                     <button onclick="setRole('PM', this)"
-                        class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-bold hover:border-slate-600 transition">PM</button>
-                    <button onclick="setRole('OT', this)"
-                        class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-bold hover:border-slate-600 transition">Other</button>
+                        class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase">PM</button>
+                    <button onclick="setRole('Other', this)"
+                        class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase">Other</button>
                 </div>
                 <label
-                    class="flex items-center gap-3 p-4 bg-white/5 rounded-2xl cursor-pointer hover:bg-white/10 transition">
+                    class="flex items-center gap-3 p-4 bg-white/5 rounded-2xl cursor-pointer hover:bg-white/10 transition border border-transparent hover:border-white/5">
                     <input type="checkbox" id="is-observer" class="w-4 h-4 accent-cyan-400">
                     <span class="text-sm font-bold">Наблюдатель (не голосую)</span>
                 </label>
                 <button onclick="joinGame()"
-                    class="w-full bg-cyan-500 text-black py-4 rounded-2xl font-black text-lg hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] transition mt-4">ПРИСОЕДИНИТЬСЯ</button>
+                    class="w-full bg-cyan-500 text-black py-4 rounded-2xl font-black text-lg hover:shadow-[0_0_25px_rgba(6,182,212,0.4)] transition mt-4 uppercase tracking-tighter">ПРИСОЕДИНИТЬСЯ</button>
             </div>
         </div>
 
-        <!-- Game Screen -->
         <div id="game-screen" class="hidden">
-            <div id="players-grid" class="flex flex-wrap justify-center gap-8 md:gap-10 mb-64"></div>
+            <div id="players-grid" class="flex flex-wrap justify-center gap-8 md:gap-10 mb-64 animate-in"></div>
 
-            <!-- Hand Selection -->
             <div id="hand-panel" class="fixed bottom-6 left-0 right-0 px-4">
-                <div class="max-w-4xl mx-auto bg-glass p-6 rounded-[2.5rem] shadow-3xl border border-white/10 relative">
+                <div
+                    class="max-w-4xl mx-auto bg-glass p-6 rounded-[2.5rem] shadow-3xl border border-white/10 relative overflow-hidden">
                     <div id="lock-overlay"
-                        class="hidden absolute inset-0 bg-black/60 rounded-[2.5rem] flex items-center justify-center z-10 backdrop-blur-[2px]">
+                        class="hidden absolute inset-0 bg-black/80 rounded-[2.5rem] flex items-center justify-center z-10 backdrop-blur-[3px]">
                         <span
-                            class="text-cyan-400 font-black uppercase tracking-widest text-sm flex items-center gap-2">
+                            class="text-cyan-400 font-black uppercase tracking-widest text-xs flex items-center gap-2">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                                    clip-rule="evenodd"></path>
+                                <path
+                                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z">
+                                </path>
                             </svg>
                             Голосование завершено
                         </span>
                     </div>
-                    <div class="flex flex-wrap justify-center gap-2 max-h-48 overflow-y-auto pr-2 custom-scroll">
+                    <div class="flex flex-wrap justify-center gap-2 max-h-48 overflow-y-auto pr-1">
                         <script>
                             for (let i = 1; i <= 20; i++) {
-                                document.write(`<button onclick="pickCard('${i}')" class="choice-btn w-12 h-14 rounded-xl font-black text-sm">${i}</button>`);
+                                document.write(`<button onclick="pickCard('${i}')" class="choice-btn w-11 h-14 rounded-xl font-black text-sm">${i}</button>`);
                             }
                         </script>
                     </div>
@@ -279,9 +277,9 @@
         document.getElementById('room-id').innerText = roomHash.toUpperCase();
 
         const myId = Math.random().toString(36).substring(7);
-        let myName = '', myRole = '??', isObserver = false, players = {}, isRevealed = false;
+        let myName = '', myRole = 'Other', isObserver = false, players = {}, isRevealed = false;
 
-        const topic = `mgmt_poker_v2/rooms/${roomHash}`;
+        const topic = `mgmt_poker_v3/rooms/${roomHash}`;
         const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
 
         client.on('connect', () => {
@@ -304,8 +302,8 @@
 
         function setRole(role, btn) {
             myRole = role;
-            document.querySelectorAll('.role-btn').forEach(b => b.className = 'role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-bold hover:border-slate-600 transition');
-            btn.className = 'role-btn py-3 bg-cyan-500/20 border border-cyan-500 rounded-xl text-[10px] font-bold text-cyan-400';
+            document.querySelectorAll('.role-btn').forEach(b => b.className = 'role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase opacity-50');
+            btn.className = 'role-btn py-3 bg-cyan-500/20 border border-cyan-500 rounded-xl text-[10px] font-black uppercase text-cyan-400 shadow-lg shadow-cyan-500/10';
         }
 
         function joinGame() {
@@ -327,7 +325,7 @@
             document.getElementById('my-display-name').innerText = myName;
             const icon = document.getElementById('my-role-icon');
             icon.innerText = myRole;
-            icon.className = `w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs role-${myRole.toLowerCase()}`;
+            icon.className = `w-8 h-8 rounded-lg flex items-center justify-center font-black text-[10px] role-${myRole.toLowerCase()}`;
 
             if (isObserver) document.getElementById('hand-panel').classList.add('hidden');
             broadcastAction('ping');
@@ -336,12 +334,11 @@
         }
 
         function pickCard(val) {
-            if (isRevealed) return; // Запрет смены после вскрытия
+            if (isRevealed) return;
 
             let currentVote = players[myId]?.vote;
             let finalVote;
 
-            // Если кликаем на ту же карту - убираем выбор
             if (currentVote === val) {
                 finalVote = null;
                 document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('active'));
@@ -367,31 +364,32 @@
             const now = Date.now();
             const activeVotes = [];
 
-            // Управление оверлеем блокировки
             document.getElementById('lock-overlay').classList.toggle('hidden', !isRevealed);
 
-            Object.keys(players).forEach(id => {
+            Object.keys(players).sort().forEach(id => {
                 const p = players[id];
                 if (now - p.ts > 15000) return;
 
                 const hasVoted = p.vote !== null && p.vote !== 'null' && p.vote !== undefined;
                 if (hasVoted && !isNaN(p.vote)) activeVotes.push(Number(p.vote));
 
-                const roleClass = `role-${p.role.toLowerCase()}`;
+                const roleKey = p.role.toLowerCase().replace('/', '');
+                const roleClass = `role-${roleKey}`;
+
                 const cardMarkup = `
                     <div class="flex flex-col items-center gap-4 ${id === myId ? 'my-card-glow p-2' : ''}">
                         <div class="poker-card ${isRevealed ? 'is-flipped' : ''}">
                             <div class="poker-card-inner">
                                 <div class="card-face card-front ${hasVoted ? 'voted-border' : ''}">
-                                    ${p.isObserver ? '<svg class="w-6 h-6 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-width="2"/></svg>' :
+                                                                        ${p.isObserver ? '<svg class="w-6 h-6 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-width="2"/></svg>' :
                         (hasVoted ? '<div class="w-3 h-3 bg-cyan-400 rounded-full animate-pulse"></div>' : '<span class="text-[8px] opacity-10 font-black uppercase">Thinking</span>')}
                                 </div>
                                 <div class="card-face card-back">${p.vote || ''}</div>
                             </div>
                         </div>
                         <div class="text-center">
-                            <span class="text-[8px] px-2 py-0.5 rounded-md border ${roleClass} font-black mb-1 inline-block">${p.role}</span>
-                            <p class="font-bold text-xs ${id === myId ? 'text-cyan-400' : ''}">${p.name}</p>
+                            <span class="text-[8px] px-2 py-0.5 rounded-md border ${roleClass} font-black mb-1 inline-block uppercase tracking-tighter">${p.role}</span>
+                            <p class="font-bold text-[13px] tracking-tight ${id === myId ? 'text-cyan-400 font-black' : 'text-slate-300'}">${p.name}</p>
                         </div>
                     </div>
                 `;
