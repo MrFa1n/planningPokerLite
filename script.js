@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const ROOM_PREFIX = "mgmt_poker_v7/rooms/";
   const HEARTBEAT_INTERVAL = 5000;
   const PLAYER_TIMEOUT = 15000;
+  const VOTING_ROLES = ["FE", "BE", "QA", "BA/SA", "Other"];
 
   const netStatusEl = document.getElementById("net-status");
   const roomIdEl = document.getElementById("room-id");
@@ -12,6 +13,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const myDisplayNameEl = document.getElementById("my-display-name");
   const controlsEl = document.getElementById("controls");
   const pmControlsEl = document.getElementById("pm-controls");
+  const voterRoleControlsEl = document.getElementById("voter-role-controls");
+  const votingRolesDisplayEl = document.getElementById("voting-roles-display");
   const pmOnlyMsgEl = document.getElementById("pm-only-msg");
   const btnReveal = document.getElementById("btn-reveal");
   const btnReset = document.getElementById("btn-reset");
@@ -20,6 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const usernameEl = document.getElementById("username");
   const rolesGridEl = document.getElementById("roles-grid");
   const isObserverEl = document.getElementById("is-observer");
+  const newRoomBtn = document.getElementById("new-room-btn");
   const gameScreenEl = document.getElementById("game-screen");
   const playersGridEl = document.getElementById("players-grid");
   const handPanelEl = document.getElementById("hand-panel");
@@ -34,6 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let timerEndTimestamp = null;
   let timerInterval = null;
   let heartbeatInterval = null;
+  let allowedVoters = [];
 
   const roomHash =
     window.location.hash.replace("#", "") ||
@@ -53,6 +58,13 @@ document.addEventListener("DOMContentLoaded", () => {
   window.toggleObserverMode = toggleObserverMode;
   window.joinGame = joinGame;
   window.pickCard = pickCard;
+
+  if (newRoomBtn) {
+    newRoomBtn.addEventListener("click", () => {
+      window.location.hash = "";
+      window.location.reload();
+    });
+  }
 
   function generateCards() {
     if (!cardsContainerEl) return;
@@ -107,11 +119,25 @@ document.addEventListener("DOMContentLoaded", () => {
       case "timer_start":
         startLocalTimer(data.endTime);
         break;
+      case "vote_control":
+        allowedVoters = data.allowedRoles;
+        if (myRole === "PM") {
+          voterRoleControlsEl
+            .querySelectorAll(".role-checkbox")
+            .forEach((box) => {
+              box.checked = allowedVoters.includes(box.value);
+            });
+        }
+        updateVotingAbility();
+        updateVotingRolesDisplay();
+        render();
+        break;
       case "ping":
         if (myName) {
           sendUpdate(players[myId]?.vote || null);
-          if (timerEndTimestamp && myRole === "PM") {
-            broadcastTimer(timerEndTimestamp);
+          if (myRole === "PM") {
+            if (timerEndTimestamp) broadcastTimer(timerEndTimestamp);
+            broadcastVoteControl();
           }
         }
         break;
@@ -150,6 +176,91 @@ document.addEventListener("DOMContentLoaded", () => {
       "role-btn py-3 bg-cyan-500/20 border border-cyan-500 rounded-xl text-[10px] font-black uppercase text-cyan-400 shadow-lg";
   }
 
+  function broadcastVoteControl() {
+    client.publish(
+      topic,
+      JSON.stringify({ type: "vote_control", allowedRoles: allowedVoters }),
+    );
+  }
+
+  function initVoterControls() {
+    let checkboxesHTML = `<span class="text-xs font-semibold uppercase text-slate-500 w-full mb-2 block text-center">Разрешить голосовать:</span><div class="flex flex-wrap gap-2 justify-center">`;
+    VOTING_ROLES.forEach((role) => {
+      checkboxesHTML += `
+              <label class="role-chip">
+                  <input type="checkbox" value="${role}" class="role-checkbox">
+                  <span>${role}</span>
+              </label>
+          `;
+    });
+    checkboxesHTML += `<button id="select-all-roles-btn" class="role-chip-all">Всем</button></div>`;
+    voterRoleControlsEl.innerHTML = checkboxesHTML;
+
+    voterRoleControlsEl.querySelectorAll(".role-checkbox").forEach((box) => {
+      box.addEventListener("change", () => {
+        allowedVoters = Array.from(
+          voterRoleControlsEl.querySelectorAll(".role-checkbox:checked"),
+        ).map((b) => b.value);
+        broadcastVoteControl();
+      });
+    });
+
+    document
+      .getElementById("select-all-roles-btn")
+      .addEventListener("click", () => {
+        const allSelected = allowedVoters.length === VOTING_ROLES.length;
+        voterRoleControlsEl
+          .querySelectorAll(".role-checkbox")
+          .forEach((box) => (box.checked = !allSelected));
+        allowedVoters = allSelected ? [] : [...VOTING_ROLES];
+        broadcastVoteControl();
+      });
+  }
+
+  function updateVotingAbility() {
+    if (isObserver) {
+      handPanelEl.classList.add("hidden");
+      return;
+    }
+
+    const canVote = allowedVoters.includes(myRole);
+
+    if (myRole === "PM") {
+      handPanelEl.classList.remove("hidden");
+      cardsContainerEl.classList.add("hidden");
+      voterRoleControlsEl.classList.remove("hidden");
+    } else {
+      voterRoleControlsEl.classList.add("hidden");
+      if (canVote) {
+        handPanelEl.classList.remove("hidden");
+        cardsContainerEl.classList.remove("hidden");
+      } else {
+        handPanelEl.classList.add("hidden");
+      }
+    }
+  }
+
+  function updateVotingRolesDisplay() {
+    if (!votingRolesDisplayEl) return;
+    const pmExists = Object.values(players).some((p) => p.role === "PM");
+
+    if (!pmExists) {
+      votingRolesDisplayEl.innerHTML =
+        "<div><span class='font-bold text-slate-500'>Ожидание подключения PM...</span></div>";
+      return;
+    }
+
+    if (allowedVoters.length === VOTING_ROLES.length) {
+      votingRolesDisplayEl.innerHTML =
+        "<div>Голосуют: <span class='font-bold'>Все роли</span></div>";
+    } else if (allowedVoters.length === 0) {
+      votingRolesDisplayEl.innerHTML =
+        "<div><span class='font-bold text-red-400'>Голосование отключено</span></div>";
+    } else {
+      votingRolesDisplayEl.innerHTML = `<div>Голосуют: <span class='font-bold'>${allowedVoters.join(", ")}</span></div>`;
+    }
+  }
+
   function joinGame() {
     myName = usernameEl.value.trim();
     isObserver = isObserverEl.checked;
@@ -179,12 +290,14 @@ document.addEventListener("DOMContentLoaded", () => {
     gameScreenEl.classList.remove("hidden");
     controlsEl.classList.remove("hidden");
     userBadgeEl.classList.remove("hidden");
+    votingRolesDisplayEl.classList.remove("hidden");
 
     if (myRole === "PM") {
       pmControlsEl.classList.remove("hidden");
       btnReveal.disabled = false;
       btnReset.disabled = false;
       pmOnlyMsgEl.classList.add("hidden");
+      initVoterControls();
     } else {
       pmControlsEl.classList.add("hidden");
       btnReveal.disabled = true;
@@ -195,10 +308,9 @@ document.addEventListener("DOMContentLoaded", () => {
     myDisplayNameEl.innerText = myName;
     const roleIconClass = `role-${myRole.toLowerCase().replace("/", "")}`;
     myRoleIconEl.innerText = myRole === "Observer" ? "👁️" : myRole;
-    myRoleIconEl.className = `w-8 h-8 rounded-lg flex items-center justify-center font-black text-[10px] border ${roleIconClass}`;
+    myRoleIconEl.className = `w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[10px] border ${roleIconClass}`;
 
-    if (isObserver) handPanelEl.classList.add("hidden");
-    else handPanelEl.classList.remove("hidden");
+    updateVotingAbility();
 
     sendUpdate(null);
     if (heartbeatInterval) clearInterval(heartbeatInterval);
@@ -217,6 +329,7 @@ document.addEventListener("DOMContentLoaded", () => {
     myRole = "";
     isObserver = false;
 
+    votingRolesDisplayEl.classList.add("hidden");
     gameScreenEl.classList.add("hidden");
     controlsEl.classList.add("hidden");
     userBadgeEl.classList.add("hidden");
@@ -275,7 +388,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function pickCard(val) {
-    if (isRevealed || isObserver) return;
+    if (
+      isRevealed ||
+      isObserver ||
+      myRole === "PM" ||
+      !allowedVoters.includes(myRole)
+    )
+      return;
     const currentVote = players[myId]?.vote;
     const finalVote = currentVote === val ? null : val;
     document
@@ -306,6 +425,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const now = Date.now();
     const activeVotes = [];
 
+    if (loginScreenEl.style.display !== "none") {
+      votingRolesDisplayEl.classList.add("hidden");
+    } else {
+      const numPlayers = Object.keys(players).length;
+      const pmExists = Object.values(players).some((p) => p.role === "PM");
+
+      if (numPlayers <= 1 && myName) {
+        votingRolesDisplayEl.classList.add("hidden");
+      } else {
+        votingRolesDisplayEl.classList.remove("hidden");
+        if (!pmExists) {
+          votingRolesDisplayEl.innerHTML =
+            "<div><span class='font-bold text-slate-500'>Ожидание подключения PM...</span></div>";
+        } else {
+          updateVotingRolesDisplay();
+        }
+      }
+    }
+
     lockOverlayEl.classList.toggle("hidden", !isRevealed);
 
     Object.keys(players)
@@ -319,24 +457,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const hasVoted =
           p.vote !== null && p.vote !== "null" && p.vote !== undefined;
-        if (hasVoted && !p.isObserver && !isNaN(p.vote)) {
+        const canVote = allowedVoters.includes(p.role);
+
+        if (hasVoted && !p.isObserver && p.role !== "PM" && canVote) {
           activeVotes.push(Number(p.vote));
         }
 
         const roleKey = p.role.toLowerCase().replace("/", "");
         const roleClass = `role-${roleKey}`;
+        const votingDisabledClass =
+          !canVote && p.role !== "PM" && !p.isObserver ? "voting-disabled" : "";
 
         const cardMarkup = `
-                <div class="flex flex-col items-center gap-4 ${id === myId ? "my-card-glow p-2" : ""}">
+                <div class="flex flex-col items-center gap-4 ${id === myId ? "my-card-glow p-2" : ""} ${votingDisabledClass}">
                     <div class="poker-card ${isRevealed ? "is-flipped" : ""}">
                         <div class="poker-card-inner">
                             <div class="card-face card-front ${hasVoted ? "voted-border" : ""}">
                                 ${
                                   p.isObserver
                                     ? '<span class="text-3xl">👁️</span>'
-                                    : hasVoted
-                                      ? '<div class="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_10px_#00f2ff]"></div>'
-                                      : '<span class="text-[8px] opacity-10 font-black uppercase">Ждет...</span>'
+                                    : p.role === "PM"
+                                      ? '<span class="text-3xl">👑</span>'
+                                      : hasVoted
+                                        ? '<div class="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_10px_#00f2ff]"></div>'
+                                        : '<span class="text-[8px] opacity-10 font-black uppercase">Ждет...</span>'
                                 }
                             </div>
                             <div class="card-face card-back shadow-2xl">${p.vote || ""}</div>

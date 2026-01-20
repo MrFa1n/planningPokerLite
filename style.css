@@ -243,6 +243,8 @@ button:disabled {
   color: var(--text-color);
   transform: translateY(-16px);
   box-shadow: 0 8px 16px var(--glass-shadow);
+  position: relative;
+  z-index: 10;
 }
 
 .choice-btn.active {
@@ -396,4 +398,75 @@ button:disabled {
 }
 #lock-overlay > span {
   color: var(--accent-color);
+}
+
+#voter-role-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+#voting-roles-display {
+  padding: 0.25rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  color: var(--text-secondary);
+  margin-left: 1rem;
+  flex-shrink: 0;
+}
+#voting-roles-display span {
+  color: var(--text-color);
+  font-weight: 700;
+}
+.role-chip {
+  cursor: pointer;
+  padding: 0.375rem 0.75rem;
+  border-radius: 999px;
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border);
+  transition: all 0.2s ease-out;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+.role-chip input {
+  display: none;
+}
+.role-chip:hover {
+  border-color: var(--accent-color);
+}
+.role-chip input:checked + span {
+  color: var(--accent-text);
+}
+.role-chip:has(input:checked) {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  color: var(--accent-text);
+}
+
+.role-chip-all,
+#new-room-btn {
+  cursor: pointer;
+  padding: 0.375rem 0.75rem;
+  border-radius: 999px;
+  background-color: var(--input-bg);
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+  transition: all 0.2s ease-out;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+.role-chip-all:hover,
+#new-room-btn:hover {
+  background-color: var(--accent-color);
+  color: var(--accent-text);
+}
+
+.voting-disabled {
+  opacity: 0.3;
+  filter: grayscale(1);
+  transition:
+    opacity 0.3s ease,
+    filter 0.3s ease;
 }

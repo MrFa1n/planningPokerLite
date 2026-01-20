@@ -16,8 +16,8 @@
 
     <div class="max-w-7xl mx-auto">
         <header
-            class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4 bg-glass p-4 rounded-3xl shadow-xl">
-            <div class="flex items-center gap-4">
+            class="flex flex-col lg:flex-row justify-between items-center mb-8 gap-4 bg-glass p-4 rounded-3xl shadow-xl">
+            <div class="flex items-center gap-2">
                 <div
                     class="w-10 h-10 bg-cyan-500/20 rounded-xl flex items-center justify-center border border-cyan-500/30">
                     <div id="net-status" class="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_8px_red]"
@@ -44,26 +44,31 @@
                         <span class="slider"></span>
                     </label>
                 </div>
-            </div>
-
-            <div id="timer-display"
-                class="hidden flex items-center gap-2 bg-white/5 px-4 py-2 rounded-2xl border border-white/10"
-                title="Время до автоматического вскрытия карт">
-                <span class="text-[10px] font-black uppercase text-slate-500">Авто-вскрытие:</span>
-                <span id="timer-seconds" class="text-xl font-black text-cyan-400">00:00</span>
-            </div>
-
-            <div id="user-badge"
-                class="hidden flex items-center gap-3 bg-white/5 p-2 pr-4 rounded-2xl border border-white/5">
-                <div id="my-role-icon"
-                    class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[10px] border">?</div>
                 <div>
-                    <p class="text-[9px] text-slate-500 font-black uppercase leading-none mb-1">Ваш профиль</p>
-                    <div class="flex items-center gap-2">
-                        <p id="my-display-name" class="font-bold text-sm text-cyan-400 leading-tight">...</p>
-                        <button onclick="leaveGame()"
-                            class="text-[9px] font-black uppercase text-red-400 border border-red-400/30 px-1.5 py-0.5 rounded hover:bg-red-400/10 transition"
-                            title="Выйти из комнаты и сменить имя или роль">Выйти</button>
+                    <div id="voting-roles-display" class="hidden"></div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div id="timer-display"
+                    class="hidden flex items-center gap-2 bg-white/5 px-4 py-2 rounded-2xl border border-white/10"
+                    title="Время до автоматического вскрытия карт">
+                    <span class="text-[10px] font-black uppercase text-slate-500">Авто-вскрытие:</span>
+                    <span id="timer-seconds" class="text-xl font-black text-cyan-400">00:00</span>
+                </div>
+
+                <div id="user-badge"
+                    class="hidden flex items-center gap-3 bg-white/5 p-2 pr-4 rounded-2xl border border-white/5">
+                    <div id="my-role-icon"
+                        class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[10px] border">?</div>
+                    <div>
+                        <p class="text-[9px] text-slate-500 font-black uppercase leading-none mb-1">Ваш профиль</p>
+                        <div class="flex items-center gap-2">
+                            <p id="my-display-name" class="font-bold text-sm text-cyan-400 leading-tight">...</p>
+                            <button onclick="leaveGame()"
+                                class="text-[9px] font-black uppercase text-red-400 border border-red-400/30 px-1.5 py-0.5 rounded hover:bg-red-400/10 transition"
+                                title="Выйти из комнаты и сменить имя или роль">Выйти</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -164,18 +169,21 @@
 
                 <button onclick="joinGame()"
                     class="w-full bg-cyan-500 text-black py-4 rounded-2xl font-black text-lg hover:shadow-lg transition mt-4 uppercase">Присоединиться</button>
+                <button id="new-room-btn"
+                    class="w-full text-center text-xs mt-4 text-slate-400 hover:text-white transition">Создать новую
+                    комнату</button>
             </div>
         </div>
 
         <div id="game-screen" class="hidden">
-            <div id="players-grid" class="flex flex-wrap justify-center gap-8 md:gap-10 mb-64"
+            <div id="players-grid" class="flex flex-wrap justify-center gap-8 md:gap-10 mb-8"
                 title="Список участников и их готовность"></div>
 
             <div id="hand-panel" class="fixed bottom-6 left-0 right-0 px-4">
                 <div class="max-w-4xl mx-auto bg-glass p-6 rounded-[2.5rem] shadow-3xl border border-white/10 relative"
                     title="Ваша колода карт для голосования">
                     <div id="lock-overlay"
-                        class="hidden absolute inset-0 bg-black/80 rounded-[2.5rem] flex items-center justify-center z-10 backdrop-blur-[3px]">
+                        class="hidden absolute inset-0 bg-black/80 rounded-[2.5rem] flex items-center justify-center z-20 backdrop-blur-[3px]">
                         <span
                             class="text-cyan-400 font-black uppercase text-xs flex items-center gap-2 tracking-widest">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -186,7 +194,9 @@
                             Вскрыто. Голосование завершено
                         </span>
                     </div>
-                    <div id="cards-container" class="flex flex-wrap justify-center gap-2 max-h-48 overflow-y-auto pr-1">
+                    <div id="voter-role-controls" class="hidden"></div>
+                    <div id="cards-container"
+                        class="flex flex-wrap justify-center gap-2 max-h-48 overflow-visible pr-1">
                     </div>
                 </div>
             </div>
