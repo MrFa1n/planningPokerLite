@@ -38,11 +38,13 @@
                         </svg>
                     </button>
                 </div>
+                <div>
+                    <label class="theme-toggle ml-4" id="theme-switcher" title="Переключить тему">
+                        <input type="checkbox" />
+                        <span class="slider"></span>
+                    </label>
+                </div>
             </div>
-
-            <button id="theme-switcher" class="p-2 rounded-full hover:bg-white/10 transition-colors"
-                title="Переключить тему">
-            </button>
 
             <div id="timer-display"
                 class="hidden flex items-center gap-2 bg-white/5 px-4 py-2 rounded-2xl border border-white/10"
@@ -170,7 +172,7 @@
                 title="Список участников и их готовность"></div>
 
             <div id="hand-panel" class="fixed bottom-6 left-0 right-0 px-4">
-                <div class="max-w-4xl mx-auto bg-glass p-6 rounded-[2.5rem] shadow-3xl border border-white/10 relative overflow-hidden"
+                <div class="max-w-4xl mx-auto bg-glass p-6 rounded-[2.5rem] shadow-3xl border border-white/10 relative"
                     title="Ваша колода карт для голосования">
                     <div id="lock-overlay"
                         class="hidden absolute inset-0 bg-black/80 rounded-[2.5rem] flex items-center justify-center z-10 backdrop-blur-[3px]">

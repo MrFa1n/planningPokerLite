@@ -86,17 +86,55 @@ body {
     border-color 0.3s ease;
 }
 
-#theme-switcher {
-  color: var(--text-secondary);
+.theme-toggle {
+  display: inline-block;
+  position: relative;
+  width: 56px;
+  height: 30px;
+  cursor: pointer;
+  vertical-align: middle;
 }
-#theme-switcher:hover {
-  color: var(--text-color);
+.theme-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
 }
+.theme-toggle .slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 30px;
+  transition: all 0.3s ease-in-out;
+}
+.theme-toggle .slider::before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: all 0.3s ease-in-out;
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>');
+  background-size: 16px 16px;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.theme-toggle input:checked + .slider {
+  background-color: #374151;
+}
+.theme-toggle input:checked + .slider::before {
+  transform: translateX(26px);
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%2360a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>');
+}
+
 h1 .text-cyan-400 {
   color: var(--accent-color);
-}
-#room-id {
-  color: var(--text-color);
 }
 button:disabled {
   cursor: not-allowed;
@@ -107,7 +145,6 @@ button:disabled {
   width: 90px;
   height: 130px;
 }
-
 .poker-card-inner {
   position: relative;
   width: 100%;
@@ -115,7 +152,6 @@ button:disabled {
   transition: transform 0.7s cubic-bezier(0.25, 1, 0.5, 1);
   transform-style: preserve-3d;
 }
-
 .is-flipped .poker-card-inner {
   transform: rotateY(180deg);
 }
@@ -135,12 +171,10 @@ button:disabled {
     border-color 0.3s ease,
     color 0.3s ease;
 }
-
 .card-front {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
 }
-
 .card-back {
   background: var(--card-back-bg);
   color: var(--card-back-text);
@@ -207,8 +241,8 @@ button:disabled {
 .choice-btn:hover:not(:disabled) {
   border-color: var(--accent-color);
   color: var(--text-color);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px var(--glass-shadow);
+  transform: translateY(-16px);
+  box-shadow: 0 8px 16px var(--glass-shadow);
 }
 
 .choice-btn.active {
@@ -266,6 +300,25 @@ button:disabled {
 #btn-reset:hover {
   background-color: var(--glass-bg);
   color: var(--text-color);
+}
+
+.highlight-action {
+  animation: pulse-glow 2s infinite;
+  box-shadow: 0 0 0 0 var(--accent-color);
+  border-radius: 0.75rem;
+}
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-color) 70%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 10px
+      color-mix(in srgb, var(--accent-color) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-color) 0%, transparent);
+  }
 }
 
 #net-status.bg-red-500 {
