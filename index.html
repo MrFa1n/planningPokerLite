@@ -103,6 +103,12 @@
             background: rgba(148, 163, 184, 0.1);
         }
 
+        .role-observer {
+            color: #ffffff;
+            border-color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
         .voted-border {
             border-color: #00f2ff !important;
             box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
@@ -195,7 +201,7 @@
 
             <div id="timer-display"
                 class="hidden flex items-center gap-2 bg-white/5 px-4 py-2 rounded-2xl border border-white/10">
-                <span class="text-[10px] font-black uppercase text-slate-500">Auto-reveal in:</span>
+                <span class="text-[10px] font-black uppercase text-slate-500">Auto-reveal:</span>
                 <span id="timer-seconds" class="text-xl font-black text-cyan-400">00:00</span>
             </div>
 
@@ -205,7 +211,11 @@
                     class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[10px] border">?</div>
                 <div>
                     <p class="text-[9px] text-slate-500 font-black uppercase leading-none mb-1">Вы вошли как</p>
-                    <p id="my-display-name" class="font-bold text-sm text-cyan-400 leading-tight">...</p>
+                    <div class="flex items-center gap-2">
+                        <p id="my-display-name" class="font-bold text-sm text-cyan-400 leading-tight">...</p>
+                        <button onclick="leaveGame()"
+                            class="text-[9px] font-black uppercase text-red-400 border border-red-400/30 px-1.5 py-0.5 rounded hover:bg-red-400/10 transition">Выйти</button>
+                    </div>
                 </div>
             </div>
 
@@ -234,9 +244,9 @@
                     class="text-[9px] text-slate-500 mr-2 font-black uppercase hidden tracking-widest">Только PM
                     управляет</div>
                 <button id="btn-reveal" onclick="broadcastAction('reveal')"
-                    class="px-6 py-2 bg-cyan-500 text-black font-black rounded-xl hover:scale-105 transition disabled:opacity-30 disabled:hover:scale-100 shadow-lg shadow-cyan-500/20 uppercase text-xs">Reveal</button>
+                    class="px-6 py-2 bg-cyan-500 text-black font-black rounded-xl hover:scale-105 transition disabled:opacity-30 uppercase text-xs">Вскрыть</button>
                 <button id="btn-reset" onclick="broadcastAction('reset')"
-                    class="px-6 py-2 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition disabled:opacity-30 uppercase text-xs">Reset</button>
+                    class="px-6 py-2 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition disabled:opacity-30 uppercase text-xs">Сброс</button>
             </div>
         </header>
 
@@ -257,36 +267,46 @@
         </div>
 
         <div id="login-screen" class="max-w-md mx-auto bg-glass p-8 rounded-[2.5rem] shadow-2xl border border-white/5">
-            <h2 class="text-2xl font-black mb-6 text-center tracking-tight">ВХОД В КОМНАТУ</h2>
-            <div class="space-y-4">
-                <input type="text" id="username" placeholder="Имя" maxlength="12"
-                    class="w-full bg-black/40 border border-slate-800 rounded-2xl px-6 py-4 focus:border-cyan-500 transition-all outline-none text-center font-bold">
-                <div class="grid grid-cols-3 gap-2">
-                    <button onclick="setRole('FE', this)"
-                        class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase">Frontend</button>
-                    <button onclick="setRole('BE', this)"
-                        class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase">Backend</button>
-                    <button onclick="setRole('QA', this)"
-                        class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase">QA</button>
-                    <button onclick="setRole('BA', this)"
-                        class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase">BA/SA</button>
-                    <button onclick="setRole('PM', this)"
-                        class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase">PM</button>
-                    <button onclick="setRole('Other', this)"
-                        class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase">Other</button>
+            <h2 class="text-2xl font-black mb-6 text-center tracking-tight uppercase">Вход в комнату</h2>
+            <div class="space-y-5">
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-500 ml-1 mb-1 block">Ваше имя:</label>
+                    <input type="text" id="username" placeholder="Введите имя..." maxlength="12"
+                        class="w-full bg-black/40 border border-slate-800 rounded-2xl px-6 py-4 focus:border-cyan-500 outline-none text-center font-bold">
                 </div>
-                <label
-                    class="flex items-center gap-3 p-4 bg-white/5 rounded-2xl cursor-pointer hover:bg-white/10 transition border border-transparent hover:border-white/5">
-                    <input type="checkbox" id="is-observer" class="w-4 h-4 accent-cyan-400">
-                    <span class="text-sm font-bold">Наблюдатель (не голосую)</span>
-                </label>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-500 ml-1 mb-1 block">Ваша роль:</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="setRole('FE', this)"
+                            class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase transition-all hover:border-slate-600 opacity-50">Frontend</button>
+                        <button onclick="setRole('BE', this)"
+                            class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase transition-all hover:border-slate-600 opacity-50">Backend</button>
+                        <button onclick="setRole('QA', this)"
+                            class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase transition-all hover:border-slate-600 opacity-50">QA</button>
+                        <button onclick="setRole('BA', this)"
+                            class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase transition-all hover:border-slate-600 opacity-50">BA/SA</button>
+                        <button onclick="setRole('PM', this)"
+                            class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase transition-all hover:border-slate-600 opacity-50">PM</button>
+                        <button onclick="setRole('Other', this)"
+                            class="role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase transition-all hover:border-slate-600 opacity-50">Other</button>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <label
+                        class="flex items-center gap-3 p-4 bg-white/5 rounded-2xl cursor-pointer hover:bg-white/10 border border-transparent hover:border-white/5">
+                        <input type="checkbox" id="is-observer" class="w-4 h-4 accent-cyan-400">
+                        <span class="text-sm font-bold">Наблюдатель (не голосую)</span>
+                    </label>
+                </div>
+
                 <button onclick="joinGame()"
-                    class="w-full bg-cyan-500 text-black py-4 rounded-2xl font-black text-lg hover:shadow-[0_0_25px_rgba(6,182,212,0.4)] transition mt-4 uppercase tracking-tighter">ПРИСОЕДИНИТЬСЯ</button>
+                    class="w-full bg-cyan-500 text-black py-4 rounded-2xl font-black text-lg hover:shadow-lg transition mt-4 uppercase">Присоединиться</button>
             </div>
         </div>
 
         <div id="game-screen" class="hidden">
-            <div id="players-grid" class="flex flex-wrap justify-center gap-8 md:gap-10 mb-64 animate-in"></div>
+            <div id="players-grid" class="flex flex-wrap justify-center gap-8 md:gap-10 mb-64"></div>
 
             <div id="hand-panel" class="fixed bottom-6 left-0 right-0 px-4">
                 <div
@@ -294,13 +314,13 @@
                     <div id="lock-overlay"
                         class="hidden absolute inset-0 bg-black/80 rounded-[2.5rem] flex items-center justify-center z-10 backdrop-blur-[3px]">
                         <span
-                            class="text-cyan-400 font-black uppercase tracking-widest text-xs flex items-center gap-2">
+                            class="text-cyan-400 font-black uppercase text-xs flex items-center gap-2 tracking-widest">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path
                                     d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z">
                                 </path>
                             </svg>
-                            Голосование завершено
+                            Вскрыто. Голосование завершено
                         </span>
                     </div>
                     <div class="flex flex-wrap justify-center gap-2 max-h-48 overflow-y-auto pr-1">
@@ -321,17 +341,19 @@
         document.getElementById('room-id').innerText = roomHash.toUpperCase();
 
         const myId = Math.random().toString(36).substring(7);
-        let myName = '', myRole = 'Other', isObserver = false, players = {}, isRevealed = false;
+        let myName = '', myRole = '', isObserver = false, players = {}, isRevealed = false;
 
         let timerEndTimestamp = null;
         let timerInterval = null;
+        let heartbeatInterval = null;
 
-        const topic = `mgmt_poker_v4/rooms/${roomHash}`;
+        const topic = `mgmt_poker_v6/rooms/${roomHash}`;
         const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
 
         client.on('connect', () => {
             document.getElementById('net-status').className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]';
             client.subscribe(topic);
+            broadcastAction('ping');
         });
 
         client.on('message', (t, msg) => {
@@ -341,11 +363,11 @@
                 players[data.id] = { ...data, ts: Date.now() };
                 render();
             }
-            else if (data.type === 'reveal') {
-                isRevealed = true;
-                stopLocalTimer();
+            else if (data.type === 'leave') {
+                delete players[data.id];
                 render();
             }
+            else if (data.type === 'reveal') { isRevealed = true; stopLocalTimer(); render(); }
             else if (data.type === 'reset') {
                 isRevealed = false;
                 stopLocalTimer();
@@ -353,9 +375,7 @@
                 document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('active'));
                 render();
             }
-            else if (data.type === 'timer_start') {
-                startLocalTimer(data.endTime);
-            }
+            else if (data.type === 'timer_start') { startLocalTimer(data.endTime); }
             else if (data.type === 'ping') {
                 if (myName) {
                     sendUpdate(players[myId]?.vote || null);
@@ -369,13 +389,26 @@
         function setRole(role, btn) {
             myRole = role;
             document.querySelectorAll('.role-btn').forEach(b => b.className = 'role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase opacity-50');
-            btn.className = 'role-btn py-3 bg-cyan-500/20 border border-cyan-500 rounded-xl text-[10px] font-black uppercase text-cyan-400 shadow-lg shadow-cyan-500/10';
+            btn.className = 'role-btn py-3 bg-cyan-500/20 border border-cyan-500 rounded-xl text-[10px] font-black uppercase text-cyan-400 shadow-lg';
+            document.getElementById('is-observer').checked = false;
         }
 
         function joinGame() {
-            myName = document.getElementById('username').value.trim();
+            const nameInput = document.getElementById('username');
+            myName = nameInput.value.trim();
             isObserver = document.getElementById('is-observer').checked;
-            if (!myName) return;
+
+            if (!myName) { alert("Пожалуйста, введите ваше имя."); return; }
+            if (!isObserver && !myRole) { alert("Пожалуйста, выберите роль."); return; }
+            if (isObserver) myRole = 'Observer';
+
+            if (myRole === 'PM') {
+                const pmExists = Object.values(players).some(p => p.role === 'PM' && (Date.now() - p.ts < 15000));
+                if (pmExists) {
+                    alert("В этой комнате уже есть PM. Выберите другую роль.");
+                    return;
+                }
+            }
 
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('game-screen').classList.remove('hidden');
@@ -384,7 +417,11 @@
 
             if (myRole === 'PM') {
                 document.getElementById('pm-controls').classList.remove('hidden');
+                document.getElementById('btn-reveal').disabled = false;
+                document.getElementById('btn-reset').disabled = false;
+                document.getElementById('pm-only-msg').classList.add('hidden');
             } else {
+                document.getElementById('pm-controls').classList.add('hidden');
                 document.getElementById('btn-reveal').disabled = true;
                 document.getElementById('btn-reset').disabled = true;
                 document.getElementById('pm-only-msg').classList.remove('hidden');
@@ -392,21 +429,39 @@
 
             document.getElementById('my-display-name').innerText = myName;
             const icon = document.getElementById('my-role-icon');
-            icon.innerText = myRole;
-            icon.className = `w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[10px] role-${myRole.toLowerCase()}`;
+            icon.innerText = (myRole === 'Observer') ? '👁️' : myRole;
+            icon.className = `w-8 h-8 rounded-lg flex items-center justify-center font-black text-[10px] role-${myRole.toLowerCase().replace('/', '')}`;
 
             if (isObserver) document.getElementById('hand-panel').classList.add('hidden');
-            broadcastAction('ping');
+            else document.getElementById('hand-panel').classList.remove('hidden');
+
             sendUpdate(null);
-            setInterval(() => sendUpdate(players[myId]?.vote || null), 5000);
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            heartbeatInterval = setInterval(() => sendUpdate(players[myId]?.vote || null), 5000);
+        }
+
+        function leaveGame() {
+            client.publish(topic, JSON.stringify({ type: 'leave', id: myId }));
+
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            stopLocalTimer();
+            myName = '';
+            myRole = '';
+            isObserver = false;
+            document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('active'));
+
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('controls').classList.add('hidden');
+            document.getElementById('user-badge').classList.add('hidden');
+            document.getElementById('login-screen').style.display = 'block';
+            document.getElementById('username').value = '';
+            document.querySelectorAll('.role-btn').forEach(b => b.className = 'role-btn py-3 bg-white/5 border border-slate-800 rounded-xl text-[10px] font-black uppercase opacity-50');
         }
 
         function startTimer() {
             const seconds = parseInt(document.getElementById('timer-select').value);
             if (seconds <= 0) return;
-
-            const endTime = Date.now() + (seconds * 1000);
-            broadcastTimer(endTime);
+            broadcastTimer(Date.now() + (seconds * 1000));
         }
 
         function broadcastTimer(endTime) {
@@ -419,9 +474,7 @@
             document.getElementById('timer-display').classList.remove('hidden');
 
             timerInterval = setInterval(() => {
-                const now = Date.now();
-                const diff = Math.max(0, Math.floor((timerEndTimestamp - now) / 1000));
-
+                const diff = Math.max(0, Math.floor((timerEndTimestamp - Date.now()) / 1000));
                 if (diff <= 0) {
                     stopLocalTimer();
                     if (myRole === 'PM') broadcastAction('reveal');
@@ -440,19 +493,18 @@
             timerInterval = null;
             timerEndTimestamp = null;
             document.getElementById('timer-display').classList.add('hidden');
-            document.getElementById('timer-seconds').classList.remove('timer-active');
         }
 
         function pickCard(val) {
-            if (isRevealed) return;
+            if (isRevealed || isObserver) return;
             let currentVote = players[myId]?.vote;
             let finalVote = (currentVote === val) ? null : val;
-
             document.querySelectorAll('.choice-btn').forEach(b => b.classList.toggle('active', b.innerText === finalVote));
             sendUpdate(finalVote);
         }
 
         function sendUpdate(vote) {
+            if (!myName) return;
             client.publish(topic, JSON.stringify({ type: 'update', id: myId, name: myName, role: myRole, isObserver, vote }));
         }
 
@@ -483,8 +535,8 @@
                         <div class="poker-card ${isRevealed ? 'is-flipped' : ''}">
                             <div class="poker-card-inner">
                                 <div class="card-face card-front ${hasVoted ? 'voted-border' : ''}">
-                                    ${p.isObserver ? '<svg class="w-6 h-6 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-width="2"/></svg>' :
-                        (hasVoted ? '<div class="w-3 h-3 bg-cyan-400 rounded-full animate-pulse"></div>' : '<span class="text-[8px] opacity-10 font-black uppercase">Thinking</span>')}
+                                    ${p.role === 'Observer' ? '<span class="text-3xl">👁️</span>' :
+                        (hasVoted ? '<div class="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_10px_#00f2ff]"></div>' : '<span class="text-[8px] opacity-10 font-black uppercase">Wait...</span>')}
                                 </div>
                                 <div class="card-face card-back">${p.vote || ''}</div>
                             </div>
