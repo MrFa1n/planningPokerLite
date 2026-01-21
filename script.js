@@ -595,4 +595,26 @@ document.addEventListener("DOMContentLoaded", () => {
   generateCards();
   initTheme();
   setInterval(render, 3000);
+
+  const appPreloader = document.getElementById("app-preloader");
+  if (appPreloader) {
+    const minimumDisplayTime = 1000;
+    const timeLoaded = performance.now();
+
+    const hidePreloader = () => {
+      appPreloader.classList.add("preloader-fade-out");
+      appPreloader.addEventListener(
+        "transitionend",
+        () => {
+          appPreloader.remove();
+        },
+        { once: true },
+      );
+    };
+
+    const timeSinceLoad = performance.now() - timeLoaded;
+    const delay = Math.max(0, minimumDisplayTime - timeSinceLoad);
+
+    setTimeout(hidePreloader, delay);
+  }
 });
