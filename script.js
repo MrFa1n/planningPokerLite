@@ -1,4 +1,13 @@
 document.addEventListener("DOMContentLoaded", () => {
+  if (
+    typeof startTutorial === "function" &&
+    !localStorage.getItem("tutorialCompleted_v1")
+  ) {
+    setTimeout(() => {
+      startTutorial(loginTutorialSteps, false);
+    }, 500);
+  }
+
   const ROOM_PREFIX = "mgmt_poker_v7/rooms/";
   const HEARTBEAT_INTERVAL = 5000;
   const PLAYER_TIMEOUT = 15000;
@@ -318,6 +327,22 @@ document.addEventListener("DOMContentLoaded", () => {
       () => sendUpdate(players[myId]?.vote || null),
       HEARTBEAT_INTERVAL,
     );
+
+    if (
+      typeof startTutorial === "function" &&
+      !localStorage.getItem("tutorialCompleted_v1")
+    ) {
+      let steps;
+      if (myRole === "PM") {
+        steps = pmTutorialSteps;
+      } else if (isObserver) {
+        steps = observerTutorialSteps;
+      } else {
+        steps = voterTutorialSteps;
+      }
+
+      setTimeout(() => startTutorial(steps, true), 500);
+    }
   }
 
   function leaveGame() {

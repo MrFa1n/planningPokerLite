@@ -1,0 +1,80 @@
+#tutorial-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999;
+}
+
+#tutorial-popover {
+  position: absolute;
+  z-index: 1001;
+  max-width: 320px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px 0 var(--glass-shadow);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  color: var(--text-color);
+  transition:
+    top 0.3s ease-in-out,
+    left 0.3s ease-in-out,
+    opacity 0.3s ease-in-out;
+}
+
+#tutorial-popover h3 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--accent-color);
+  margin-bottom: 0.75rem;
+}
+
+#tutorial-popover p {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+#tutorial-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#tutorial-navigation button {
+  background-color: var(--input-bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--input-border);
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+}
+
+#tutorial-navigation button#tutorial-next {
+  background-color: var(--accent-color);
+  color: var(--accent-text);
+  border-color: var(--accent-color);
+}
+
+#tutorial-navigation button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+#tutorial-counter {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.tutorial-highlight {
+  position: relative;
+  z-index: 1000;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75);
+  transition: box-shadow 0.3s ease-in-out;
+  border-radius: 1rem;
+}
